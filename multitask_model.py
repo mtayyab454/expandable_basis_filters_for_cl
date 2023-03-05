@@ -5,61 +5,6 @@ import torch.nn as nn
 
 from multitask_layer import MultitaskConv2d
 
-def display_stats(basis_model, model, exp_name, input_size):
-
-    ms = ModelStats()
-    _, _, info = ms.get_stats(basis_model, input_size)
-
-    sum_basisconv2d_vals = lambda mylist:sum([val for val, ln in zip(mylist, info['layer_name']) if ln == 'BasisConv2d'])
-
-    org_flops = sum_basisconv2d_vals(info['org_flops'])
-    basis_flops = sum_basisconv2d_vals(info['basis_flops'])
-
-    org_filters = sum_basisconv2d_vals(info['out_channels'])
-    basis_filters = sum_basisconv2d_vals(info['basis_channels'])
-
-    num_model_conv_param = sum_basisconv2d_vals(info['org_params'])
-    num_basis_conv_param = sum_basisconv2d_vals(info['basis_params'])
-
-    num_model_param = sum(p.numel() for p in model.parameters())
-    num_basis_param = sum(p.numel() for p in basis_model.parameters())
-
-    print_text = f"\n############################################# {exp_name} #############################################\n"
-    print_text += f"\n    Model FLOPs: {org_flops / 10 ** 6:.2f}M"
-    print_text += f"\n    Basis Model FLOPs: {basis_flops / 10 ** 6:.2f}M"
-    print_text += f"\n    % Reduction in FLOPs: {100 - (basis_flops * 100 / org_flops):.2f} %"
-    print_text += f"\n    % Speedup: {org_flops / basis_flops:.2f} %\n"
-
-    print_text += f"\n    Model Conv Params: {num_model_conv_param / 10 ** 6:.2f}M"
-    print_text += f"\n    Basis Model Conv params: {num_basis_conv_param / 10 ** 6:.2f}M"
-    print_text += f"\n    % Reduction in Conv params: {100 - (num_basis_conv_param * 100 / num_model_conv_param):.2f} %\n"
-
-    print_text += f"\n    Model Total Params: {num_model_param / 10 ** 6:.2f}M"
-    print_text += f"\n    Basis Model Total params: {num_basis_param / 10 ** 6:.2f}M"
-    print_text += f"\n    % Reduction in Total params: {100 - (num_basis_param * 100 / num_model_param):.2f} %\n"
-
-    print_text += f"\n    Model Filters: {org_filters}"
-    print_text += f"\n    Basis Model Filters: {basis_filters}"
-    print_text += f"\n    % Reduction in Filters: {100 - (basis_filters * 100.0 / org_filters):.2f} %\n"
-
-    print_text += "\n    Model Accuracy: "
-    print_text += "\n    Basis Model Accuracy: "
-    print_text += "\n    Reduction in Accuracy: \n"
-
-    print_text += f"\n    Filters in original convs: {info['out_channels']}"
-    print_text += f"\n    Filters in basis convs: {info['basis_channels']}"
-    print_text += "\n\n#########################################################################################################\n"
-
-    stats = {'print_stats': print_text, 'exp_name': exp_name, 'flops_info': info, 'org_flops': org_flops,
-             'basis_flops': basis_flops, 'model_conv_param': num_model_conv_param,
-             'basis_conv_param': num_basis_conv_param,
-             'model_param': num_model_param, 'basis_param': num_basis_param, 'org_filters': org_filters,
-             'basis_filters': basis_filters,
-             'org_filters_vec': info['out_channels'],
-             'basis_filters_vec': info['basis_channels']}
-
-    print(print_text)
-    return stats
 def trace_model(model):
     in_channels, out_channels, basis_channels, layer_type = [], [], [], []
 
@@ -214,10 +159,22 @@ class MultiTaskModel(nn.Module):
 
         for name, module in self.named_modules():
             if isinstance(module, MultitaskConv2d):
-                parameter.append(module.conv_task[task_id].parameters())
+                # parameter.extend([p.data for p in module.conv_task[task_id].parameters()])
+                parameter.extend(module.conv_task[task_id].parameters())
                 if task_id == 0:
-                    parameter.append(module.conv_shared.parameters())
+                    # parameter.extend([p.data for p in module.conv_shared.parameters()])
+                    parameter.extend(module.conv_shared.parameters())
 
-        parameter.append(self.classifiers[task_id].parameters())
+        # parameter.extend([p.data for p in self.classifiers[task_id].parameters()])
+        parameter.extend(self.classifiers[task_id].parameters())
 
         return parameter
+
+    def ensemble_forward(self, x):
+        outputs = []
+        for i in range(len(self.classifiers)):
+            self.set_task_id(i)
+            out = self.forward(x)
+            outputs.append(out)
+
+        return outputs

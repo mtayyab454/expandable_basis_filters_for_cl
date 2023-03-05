@@ -12,7 +12,6 @@ mse.cuda()
 
 def train(trainloader, model, args, optimizer, criterion, task_id, keys, talk=False):
     # print('Training...')
-    model.set_task_id(task_id)
     model.train()
 
     accumulator = VectorAccumulator(keys)
@@ -174,9 +173,6 @@ def training_loop_multitask(model, optimizer, task_id, train_loaders, test_loade
         print('\nTask ID: [%d] - Epoch: [%d | %d] LR: %f' % (task_id, epoch + 1, args.epochs, lr))
         print('Training...')
         train_stats = train(train_loaders[task_id], model, args, optimizer, criterion, task_id, logger.keys)
-
-        if task_id == 0 and args.use_universal_conv:
-            model.commit()
 
         print('Testing...')
         test_stats = test(test_loaders[task_id], model, args, criterion, task_id, logger.keys)

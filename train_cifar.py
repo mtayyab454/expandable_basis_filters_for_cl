@@ -10,7 +10,7 @@ from utils import Logger, create_dir, backup_code
 from cifar.trainer import testing_loop, training_loop_multitask, inference
 
 import cifar.models as models
-from multitask_model import trace_model, get_basis_channels_from_t, display_stats
+from multitask_model import trace_model, get_basis_channels_from_t
 import incremental_dataloader as data
 def str2bool(v):
     if isinstance(v, bool):
@@ -26,29 +26,29 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 # Datasets
 
 parser.add_argument('--jobid', type=str, default='test')
-parser.add_argument('--arch', default='resnet18_multitask')
+parser.add_argument('--arch', default='resnet20')
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', const=False, default=False)
 parser.add_argument('--add-bn-next', type=str2bool, nargs='?', const=True, default=True)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
-parser.add_argument('--increments', type=int, nargs='+', default=[20, 20, 20, 20, 20])
+parser.add_argument('--increments', type=int, nargs='+', default=[25, 25, 25, 25])
 parser.add_argument('--validation', default=0, type=int)
 
 parser.add_argument('--random-classes', type=str2bool, nargs='?', const=True, default=False)
 parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=False)
 
-parser.add_argument('--starting-tid', type=int, default=0)
-# checkpoint/132937_resnet32_multitask/model0_best.pth
-parser.add_argument('--pretrained-cp', type=str, default='')
-parser.add_argument('-j', '--workers', default=0, type=int)
-parser.add_argument('--compression', default=0.25, type=float)
+# parser.add_argument('--starting-tid', type=int, default=0)
+# # checkpoint/132937_resnet32_multitask/model0_best.pth
+# parser.add_argument('--pretrained-cp', type=str, default='')
+parser.add_argument('-j', '--workers', default=4, type=int)
+parser.add_argument('--compression', default=0.85, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=250, type=int)
+parser.add_argument('--epochs', default=5, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
-parser.add_argument('--ft-epochs', default=250, type=int)
+parser.add_argument('--ft-epochs', default=5, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
 parser.add_argument('--ft-weight_decay', default=5e-4, type=float)
@@ -78,7 +78,7 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
     # 2. Train universal conv without compression
     logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task0',
                     keys=['time', 'acc1', 'acc5', 'ce_loss'])
-    logger.one_time({'seed': args.manualSeed, 'comments': 'Train task 0'})
+    logger.one_time({'seed': args.manual_seed, 'comments': 'Train task 0'})
     logger.set_names(['lr', 'train_stats', 'test_stats'])
     print('\n\n#######################################################################################\n')
     print('Training task: 0')
@@ -91,9 +91,10 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
 
     num_conv, num_linear, in_channels, out_channels, basis_channels, layer_type = trace_model(model)
     _, _, basis_channels = get_basis_channels_from_t(model, [args.compression] * num_conv)
+    print(basis_channels)
 
     # Create a multitask model with the basis channels estimated above
-    mt_model = models.__dict__[args.arch + '_multitask'](basis_channels, [args.add_bn_next] * len(basis_channels),
+    mt_model = models.__dict__[args.arch + '_multitask'](basis_channels, [False] * len(basis_channels),
                                                          args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
     mt_model.cuda()
@@ -103,7 +104,7 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
 
         logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task0_ft',
                         keys=['time', 'acc1', 'acc5', 'ce_loss'])
-        logger.one_time({'seed': args.manualSeed, 'comments': 'Finetune task 0'})
+        logger.one_time({'seed': args.manual_seed, 'comments': 'Finetune task 0'})
         logger.set_names(['lr', 'train_stats', 'test_stats'])
 
         print('\n\n###########################################\n')
@@ -153,7 +154,7 @@ def main():
     # args.increments = inc_dataset.increments
 
 ########################################################################################################################
-    model = models.__dict__[args.arch](num_classes=args.num_classes)
+    model = models.__dict__[args.arch](num_classes=args.increments[0])
     model.cuda()
 
     class_incrimental_accuracy = []
@@ -165,15 +166,15 @@ def main():
     class_incrimental_accuracy.append(tmp)
     task_prediction_accuracy.append(tmp1)
 
-    mt_model.set_inference(True)
     for i in range(1, len(args.increments)):
 
         logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task'+str(i),
                         keys=['time', 'acc1', 'acc5', 'ce_loss'])
-        logger.one_time({'seed': args.manualSeed, 'comments': 'Train task '+str(i)})
+        logger.one_time({'seed': args.manual_seed, 'comments': 'Train task '+str(i)})
         logger.set_names(['lr', 'train_stats', 'test_stats'])
 
         mt_model.add_task(copy_from=0, num_classes=args.increments[i])
+        mt_model.set_task_id(i)
         mt_model.cuda()
         # print(mtmodel)
         print('\n\n#######################################################################################\n')
