@@ -44,14 +44,14 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=4, type=int)
 parser.add_argument('--compression', default=0.85, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=5, type=int)
+parser.add_argument('--epochs', default=1, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
-parser.add_argument('--ft-epochs', default=5, type=int)
+parser.add_argument('--ft-epochs', default=1, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
-parser.add_argument('--ft-weight_decay', default=5e-4, type=float)
+parser.add_argument('--ft-weight-decay', default=5e-4, type=float)
 
 parser.add_argument('--train-batch', default=64, type=int)
 parser.add_argument('--test-batch', default=100, type=int)

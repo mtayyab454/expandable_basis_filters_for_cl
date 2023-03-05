@@ -3,7 +3,7 @@ import torch.nn as nn
 from collections import OrderedDict
 
 class TaskConv2d(nn.Module):
-    def __init__(self, add_bn_next, add_bn_prev, in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, groups=1):
+    def __init__(self, add_bn_prev, add_bn_next, in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, groups=1):
         super(TaskConv2d, self).__init__()
 
         self.conv_t = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=True)
@@ -39,7 +39,7 @@ class MultitaskConv2d(nn.Module):
         self.task_id = 0
         # define new convolution layers with F and w
         self.conv_shared = nn.Conv2d(in_channels, basis_channels, kernel_size, stride, padding, dilation, groups, bias=False)
-        tc = TaskConv2d(add_bn_next=add_bn_prev, add_bn_prev=add_bn_next, in_channels=basis_channels, out_channels=out_channels)
+        tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next, in_channels=basis_channels, out_channels=out_channels)
 
         self.conv_task = nn.ModuleList()
         self.conv_task.append(tc)
