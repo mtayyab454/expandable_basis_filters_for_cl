@@ -2,7 +2,7 @@ import torch
 from cifar.models.resnet import resnet32_multitask, resnet32
 from cifar.models.testnet import testcnn_multitask, testcnn
 
-from multitask_helpers import trace_model, get_basis_channels_from_t, display_stats
+from multitask_model import trace_model, get_basis_channels_from_t, display_stats
 
 if __name__ == '__main__':
     # Create a model and train on task 1
@@ -16,12 +16,15 @@ if __name__ == '__main__':
     _, _, basis_channels = get_basis_channels_from_t(model, [1.0]*num_conv)
 
     # Create a multitask model with the basis channels estimated above
-    basis_model = resnet32_multitask(basis_channels, [False]*len(basis_channels), [10])
+    basis_model = resnet32_multitask(basis_channels, [False]*len(basis_channels), 10)
 
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
     basis_model.load_t1_weights(model)
     basis_model.eval()
 
+    # basis_model_output = basis_model(input_tensor)
+    basis_model.add_task(0, 10)
+    basis_model.set_task_id(1)
     basis_model_output = basis_model(input_tensor)
 
     # Check if the results are same.

@@ -138,8 +138,7 @@ def resnet1202(num_classes):
 
 ########################################################################################################################
 
-from multitask_helpers import MultiTaskModel
-from multitask_layer import MultitaskConv2d
+from multitask_model import MultiTaskModel
 
 class ResNetMultitask(ResNet, MultiTaskModel):
     def __init__(self, basis_channels_list, add_bn, block, num_blocks, num_classes):
@@ -148,8 +147,7 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         del self.linear
         self.task_id = 0
         self.classifiers = nn.ModuleList()
-        for nc in num_classes:
-            self.classifiers.append(nn.Linear(64, nc))
+        self.classifiers.append(nn.Linear(64, num_classes))
 
         self.freeze_preexisitng_bn()
         self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn)
@@ -159,6 +157,13 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.classifiers[0].weight.data = t1_model.linear.weight.data.clone()
         self.classifiers[0].bias.data = t1_model.linear.bias.data.clone()
         super().load_t1_weights(t1_model)
+
+    def set_task_id(self, id):
+        self.task_id = id
+        super().set_task_id(id)
+
+    def add_task(self, copy_from, num_classes):
+        super().add_task(64, copy_from, num_classes)
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))

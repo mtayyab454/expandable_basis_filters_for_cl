@@ -21,7 +21,7 @@ class MySmallCNN(nn.Module):
         x = self.linear(x)
         return x
 
-from multitask_helpers import MultiTaskModel
+from multitask_model import MultiTaskModel
 class SmallCNNMultitask(MySmallCNN, MultiTaskModel):
     def __init__(self, basis_channels_list, add_bn):
         super().__init__()

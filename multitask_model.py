@@ -193,93 +193,31 @@ class MultiTaskModel(nn.Module):
         for basis_module, conv_module in zip(basis_modules, conv_modules):
             basis_module.init_weights_from_conv2d(conv_module)
 
-    # def add_task(self):
-
-class ModelStats:
-    def __init__(self):
-        self.reset_variables()
-
-    def reset_variables(self):
-        self.total_flops = 0
-        self.total_params = 0
-
-        self.info = {'org_flops': [], 'basis_flops': [],'org_params': [], 'basis_params': [], 'input_size': [], 'output_size': [], 'layer_name': [],
-                'in_channels': [], 'out_channels': [], 'basis_channels': [], 'kernel_size': []}
-    def get_stats(self, model, input_size):
-        self.reset_variables()
-
-        # Register appropriate hooks
-        handles = []
-        for name, module in model.named_modules():
+    def set_task_id(self, id):
+        for name, module in self.named_modules():
             if isinstance(module, MultitaskConv2d):
-                handles.append(module.register_forward_hook(self.basisconv2d_hook))
-            if isinstance(module, nn.Linear):
-                handles.append(module.register_forward_hook(self.linear_hook))
+                module.task_id = id
 
-        device = next(model.parameters()).device
-        x = torch.rand(1, *input_size).to(device)
-        model(x)
+    def add_task(self, classifier_in, copy_from, num_classes):
 
-        for hd in handles:
-            hd.remove()
+        ln = nn.Linear(classifier_in, num_classes)
+        ln.weight.data = self.classifiers[copy_from].weight.data.clone()
+        ln.bias.data = self.classifiers[copy_from].bias.data.clone()
+        self.classifiers.append(ln)
 
-        return self.total_flops, self.total_params, self.info
+        for name, module in self.named_modules():
+            if isinstance(module, MultitaskConv2d):
+                module.add_task(copy_from)
 
-    def linear_hook(self, module, input, output):
-        input_size = input[0].size()
-        output_size = output.size()
+    def get_task_parameter(self, task_id):
+        parameter = []
 
-        # Calculate the number of FLOPS for a fully connected layer
-        layer_flops = input_size[0] * input_size[1] * output_size[1]
-        layer_params = sum(p.numel() for p in module.parameters())
+        for name, module in self.named_modules():
+            if isinstance(module, MultitaskConv2d):
+                parameter.append(module.conv_task[task_id].parameters())
+                if task_id == 0:
+                    parameter.append(module.conv_shared.parameters())
 
-        # Add the FLOPS to the total count
-        self.total_flops += layer_flops
-        self.total_params += layer_params
+        parameter.append(self.classifiers[task_id].parameters())
 
-        self.info['org_flops'].append(layer_flops)
-        self.info['basis_flops'].append(0)
-        self.info['org_params'].append(layer_params)
-        self.info['basis_params'].append(0)
-        self.info['input_size'].append(input_size)
-        self.info['output_size'].append(output_size)
-        self.info['layer_name'].append(module._get_name())
-        self.info['in_channels'].append(module.in_features)
-        self.info['out_channels'].append(module.out_features)
-        self.info['basis_channels'].append(0)
-        self.info['kernel_size'].append(0)
-
-    def basisconv2d_hook(self, module, input, output):
-        input_size = input[0].size()
-        output_size = output.size()
-
-        in_channels = module.conv_f.in_channels
-        basis_channels = module.conv_f.out_channels
-        out_channels = module.conv_w.out_channels
-
-        # Calculate the number of FLOPS BasisConv2d layer
-        filter_mul = module.conv_f.kernel_size[0] * module.conv_f.kernel_size[1] * in_channels
-        filter_add = filter_mul
-
-        org_mul_num = output_size[2] * output_size[3] * (filter_mul + filter_add) * out_channels
-
-        basisconv_mul_num = output_size[2] * output_size[3] * ((filter_mul + filter_add)) * basis_channels
-        proj_mul_num = output_size[2] * output_size[3] * (basis_channels + basis_channels) * out_channels
-
-        layer_flops = basisconv_mul_num+proj_mul_num
-        layer_params = sum(p.numel() for p in module.parameters())
-
-        self.total_flops += layer_flops
-        self.total_params += layer_params
-
-        self.info['org_flops'].append(org_mul_num)
-        self.info['basis_flops'].append(layer_flops)
-        self.info['org_params'].append(module.conv_f.kernel_size[0] * module.conv_f.kernel_size[1] * in_channels * out_channels)
-        self.info['basis_params'].append(layer_params)
-        self.info['input_size'].append(input_size)
-        self.info['output_size'].append(output_size)
-        self.info['layer_name'].append(module._get_name())
-        self.info['in_channels'].append(in_channels)
-        self.info['out_channels'].append(out_channels)
-        self.info['basis_channels'].append(basis_channels)
-        self.info['kernel_size'].append(module.conv_f.kernel_size)
+        return parameter
