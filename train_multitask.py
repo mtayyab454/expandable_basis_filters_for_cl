@@ -26,8 +26,8 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 # Datasets
 
 parser.add_argument('--jobid', type=str, default='test')
-parser.add_argument('--arch', default='resnet20')
-parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
+parser.add_argument('--arch', default='resnet18')
+parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=True)
 parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=False)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
@@ -44,11 +44,11 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=4, type=int)
 parser.add_argument('--compression', default=0.99999, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=1, type=int)
+parser.add_argument('--epochs', default=5, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
-parser.add_argument('--ft-epochs', default=1, type=int)
+parser.add_argument('--ft-epochs', default=5, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
 parser.add_argument('--ft-weight-decay', default=5e-4, type=float)
@@ -73,9 +73,6 @@ torch.manual_seed(args.manual_seed)
 torch.cuda.manual_seed_all(args.manual_seed)
 
 def train_task1(model, train_loaders, test_loaders, args, save_best):
-    # There are 4 possible ways to train for task0.
-    # 1. Train shared and task parameters seprately without compression
-    # 2. Train universal conv without compression
     logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task0',
                     keys=['time', 'acc1', 'acc5', 'ce_loss'])
     logger.one_time({'seed': args.manual_seed, 'comments': 'Train task 0'})
@@ -97,7 +94,7 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
     mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
         add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
-    print(mt_model)
+    # print(mt_model)
     mt_model.cuda()
     mt_model.load_t1_weights(model)
 
