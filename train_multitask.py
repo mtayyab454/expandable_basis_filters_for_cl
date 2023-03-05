@@ -26,9 +26,9 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 # Datasets
 
 parser.add_argument('--jobid', type=str, default='test')
-parser.add_argument('--arch', default='resnet18')
+parser.add_argument('--arch', default='resnet20')
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', const=False, default=False)
-parser.add_argument('--add-bn-next', type=str2bool, nargs='?', const=True, default=True)
+parser.add_argument('--add-bn-next', type=str2bool, nargs='?', const=False, default=True)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
@@ -42,13 +42,13 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 # # checkpoint/132937_resnet32_multitask/model0_best.pth
 # parser.add_argument('--pretrained-cp', type=str, default='')
 parser.add_argument('-j', '--workers', default=4, type=int)
-parser.add_argument('--compression', default=0.85, type=float)
+parser.add_argument('--compression', default=0.99999, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=1, type=int)
+parser.add_argument('--epochs', default=5, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
-parser.add_argument('--ft-epochs', default=1, type=int)
+parser.add_argument('--ft-epochs', default=5, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
 parser.add_argument('--ft-weight-decay', default=5e-4, type=float)

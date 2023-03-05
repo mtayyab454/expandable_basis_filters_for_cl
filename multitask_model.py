@@ -141,11 +141,10 @@ class MultiTaskModel(nn.Module):
             if isinstance(module, MultitaskConv2d):
                 module.task_id = id
 
-    def add_task(self, classifier_in, copy_from, num_classes):
+    def add_task(self, copy_from, num_classes):
 
-        ln = nn.Linear(classifier_in, num_classes)
-        ln.weight.data = self.classifiers[copy_from].weight.data.clone()
-        ln.bias.data = self.classifiers[copy_from].bias.data.clone()
+        ln = nn.Linear(self.classifiers[0].weight.shape[1], num_classes)
+        ln.load_state_dict(self.classifiers[copy_from].state_dict())
         self.classifiers.append(ln)
 
         for name, module in self.named_modules():

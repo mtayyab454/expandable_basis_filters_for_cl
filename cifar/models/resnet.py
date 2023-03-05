@@ -113,11 +113,8 @@ class ResNet(nn.Module):
         out = self.linear(out)
         return out
 
-
-def resnet18(num_classes):
-    """ return a ResNet 18 object
-    """
-    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
+def resnet20(num_classes):
+    return ResNet(BasicBlock, [3, 3, 3], num_classes=num_classes)
 
 def resnet32(num_classes):
     return ResNet(BasicBlock, [5, 5, 5], num_classes=num_classes)
@@ -154,9 +151,6 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.task_id = id
         super().set_task_id(id)
 
-    def add_task(self, copy_from, num_classes):
-        super().add_task(64, copy_from, num_classes)
-
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
@@ -169,10 +163,8 @@ class ResNetMultitask(ResNet, MultiTaskModel):
 
         return out
 
-def resnet18_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
-    """ return a ResNet 18 object
-    """
-    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
+def resnet20_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [3, 3, 3], num_classes=num_classes)
 
 def resnet32_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
     return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [5, 5, 5], num_classes=num_classes)
