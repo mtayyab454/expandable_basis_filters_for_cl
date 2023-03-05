@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 parser.add_argument('--jobid', type=str, default='test')
 parser.add_argument('--arch', default='resnet18')
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=True)
-parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=False)
+parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
@@ -44,11 +44,11 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=4, type=int)
 parser.add_argument('--compression', default=0.99999, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=5, type=int)
+parser.add_argument('--epochs', default=1, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
-parser.add_argument('--ft-epochs', default=5, type=int)
+parser.add_argument('--ft-epochs', default=1, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
 parser.add_argument('--ft-weight-decay', default=5e-4, type=float)
@@ -72,12 +72,41 @@ random.seed(args.manual_seed)
 torch.manual_seed(args.manual_seed)
 torch.cuda.manual_seed_all(args.manual_seed)
 
+def get_data_loaders(args):
+    train_loaders = []
+    test_loaders = []
+    inc_dataset = data.IncrementalDataset(
+        dataset_name=args.dataset,
+        args=args,
+        random_order=args.random_classes,
+        shuffle=True,
+        seed=args.manual_seed,
+        batch_size=args.train_batch,
+        workers=args.workers,
+        validation_split=args.validation,
+        increment=args.increments[0],
+    )
+    task_data = []
+    for i in range(len(args.increments)):
+        task_info, trl, vll, tsl = inc_dataset.new_task()
+
+        train_loaders.append(trl)
+        test_loaders.append(tsl)
+    # args.increments = inc_dataset.increments
+
+    return train_loaders, test_loaders
+
 def train_task1(model, train_loaders, test_loaders, args, save_best):
+    ###########################################################################
+    ####################### Train Conv Model on Task 1 ########################
+    ###########################################################################
+
+
     logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task0',
                     keys=['time', 'acc1', 'acc5', 'ce_loss'])
     logger.one_time({'seed': args.manual_seed, 'comments': 'Train task 0'})
     logger.set_names(['lr', 'train_stats', 'test_stats'])
-    print('\n\n#######################################################################################\n')
+    print('\n\n'+ '_'*90 +'\n')
     print('Training task: 0')
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
@@ -97,6 +126,10 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
     # print(mt_model)
     mt_model.cuda()
     mt_model.load_t1_weights(model)
+
+    ###########################################################################
+    ##################### Finetune Conv Model on Task 1 #######################
+    ###########################################################################
 
     if args.compression < 1.0 or args.add_bn_prev: # Finetune
 
@@ -128,32 +161,10 @@ def main():
     # backup_code(os.path.join('logs', args.jobid + '_' + args.arch, 'backup'), ['train_multitask.py', 'trainer.py', 'train_multitask.slurm'])
     create_dir([args.checkpoint, args.logs])
 
-########################################################################################################################
-
-    train_loaders = []
-    test_loaders = []
-    inc_dataset = data.IncrementalDataset(
-        dataset_name=args.dataset,
-        args=args,
-        random_order=args.random_classes,
-        shuffle=True,
-        seed=args.manual_seed,
-        batch_size=args.train_batch,
-        workers=args.workers,
-        validation_split=args.validation,
-        increment=args.increments[0],
-    )
-    task_data = []
-    for i in range(len(args.increments)):
-        task_info, trl, vll, tsl = inc_dataset.new_task()
-
-        train_loaders.append(trl)
-        test_loaders.append(tsl)
-    # args.increments = inc_dataset.increments
-
-########################################################################################################################
     model = models.__dict__[args.arch](num_classes=args.increments[0])
     model.cuda()
+
+    train_loaders, test_loaders = get_data_loaders(args)
 
     class_incrimental_accuracy = []
     task_prediction_accuracy = []
@@ -164,19 +175,26 @@ def main():
     class_incrimental_accuracy.append(tmp)
     task_prediction_accuracy.append(tmp1)
 
-    for i in range(1, len(args.increments)):
+    ###################################################################################################################
+    ######################################### Train remaining tasks ###################################################
+    ###################################################################################################################
 
+    for i in range(1, len(args.increments)):
+        # Setup logger
         logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task'+str(i),
                         keys=['time', 'acc1', 'acc5', 'ce_loss'])
         logger.one_time({'seed': args.manual_seed, 'comments': 'Train task '+str(i)})
         logger.set_names(['lr', 'train_stats', 'test_stats'])
+        print('\n\n'+ '_'*90 +'\n')
+        print('Training task: ', i)
 
+        # Add new task parameters to the model
         mt_model.add_task(copy_from=0, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
         mt_model.set_task_id(i)
         mt_model.cuda()
         # print(mtmodel)
-        print('\n\n#######################################################################################\n')
-        print('Training task: ', i)
+
+        # Training model
         optimizer = optim.SGD(mt_model.get_task_parameter(i), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
         mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=i, train_loaders=train_loaders, test_loaders=test_loaders, logger=logger, args=args,
                                         save_best=True)

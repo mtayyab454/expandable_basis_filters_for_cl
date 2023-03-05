@@ -103,7 +103,8 @@ def _freeze_preexisitng_bn(parent_module):
 
         if isinstance(module, nn.BatchNorm2d):
             # print(name)
-            module.track_running_stats = False
+            # Uncommenting this makes the model perform poorly on validation set. Why?
+            # module.track_running_stats = False
             for param in module.parameters():
                 param.requires_grad = False
         elif not isinstance(module, MultitaskConv2d):
