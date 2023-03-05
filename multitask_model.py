@@ -70,8 +70,15 @@ def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_li
             # Replace the Conv2d layer with a BasisConv2d layer
             # weight = child_module.weight.data.clone()
             # bias = child_module.bias.data.clone() if child_module.bias is not None else None
-            add_bn_prev = add_bn_prev_list.pop(0)
-            add_bn_next = add_bn_next_list.pop(0)
+            if isinstance(add_bn_prev_list, list):
+                add_bn_prev = add_bn_prev_list.pop(0)
+            else:
+                add_bn_prev = add_bn_prev_list
+
+            if isinstance(add_bn_next_list, list):
+                add_bn_next = add_bn_next_list.pop(0)
+            else:
+                add_bn_next = add_bn_next_list
 
             in_channels = child_module.in_channels
             basis_channels = basis_channels_list.pop(0)
@@ -101,9 +108,6 @@ def _freeze_preexisitng_bn(parent_module):
                 param.requires_grad = False
         elif not isinstance(module, MultitaskConv2d):
             _freeze_preexisitng_bn(module)
-
-# def _load_t1_weights(basis_module, conv_module):
-
 
 class MultiTaskModel(nn.Module):
     def __init__(self):
@@ -141,7 +145,7 @@ class MultiTaskModel(nn.Module):
             if isinstance(module, MultitaskConv2d):
                 module.task_id = id
 
-    def add_task(self, copy_from, num_classes):
+    def add_task(self, copy_from, add_bn_prev_list, add_bn_next_list, num_classes):
 
         ln = nn.Linear(self.classifiers[0].weight.shape[1], num_classes)
         ln.load_state_dict(self.classifiers[copy_from].state_dict())
@@ -149,7 +153,16 @@ class MultiTaskModel(nn.Module):
 
         for name, module in self.named_modules():
             if isinstance(module, MultitaskConv2d):
-                module.add_task(copy_from)
+                if isinstance(add_bn_prev_list, list):
+                    add_bn_prev = add_bn_prev_list.pop(0)
+                else:
+                    add_bn_prev = add_bn_prev_list
+
+                if isinstance(add_bn_next_list, list):
+                    add_bn_next = add_bn_next_list.pop(0)
+                else:
+                    add_bn_next = add_bn_next_list
+                module.add_task(copy_from, add_bn_prev, add_bn_next)
 
     def get_task_parameter(self, task_id):
         parameter = []

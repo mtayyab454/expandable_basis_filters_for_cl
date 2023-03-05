@@ -60,11 +60,11 @@ class MultitaskConv2d(nn.Module):
         else:
             self.conv_task[0].conv_t.bias.data.zero_()
 
-    def add_task(self, copy_from=0):
-        tc = TaskConv2d(add_bn_next=True if self.conv_task[0].bn_next is not None else False, add_bn_prev=False,
+    def add_task(self, copy_from, add_bn_prev, add_bn_next):
+        tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
                         in_channels=self.conv_task[0].conv_t.in_channels, out_channels=self.conv_task[0].conv_t.out_channels)
 
-        tc.load_state_dict(self.conv_task[copy_from].state_dict())
+        tc.load_state_dict(self.conv_task[copy_from].state_dict(), strict=False)
         self.conv_task.append(tc)
 
     def svd_init(self, weight, sparse_filters):

@@ -172,7 +172,7 @@ if __name__ == '__main__':
     basis_model.eval()
 
     # basis_model_output = basis_model(input_tensor)
-    basis_model.add_task(0, 10)
+    basis_model.add_task(0, False, False, 10)
     basis_model.set_task_id(1)
     basis_model_output = basis_model(input_tensor)
 

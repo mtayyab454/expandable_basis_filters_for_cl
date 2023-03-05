@@ -27,8 +27,8 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 
 parser.add_argument('--jobid', type=str, default='test')
 parser.add_argument('--arch', default='resnet20')
-parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', const=False, default=False)
-parser.add_argument('--add-bn-next', type=str2bool, nargs='?', const=False, default=True)
+parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
+parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=False)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
@@ -44,11 +44,11 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=4, type=int)
 parser.add_argument('--compression', default=0.99999, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=5, type=int)
+parser.add_argument('--epochs', default=1, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
-parser.add_argument('--ft-epochs', default=5, type=int)
+parser.add_argument('--ft-epochs', default=1, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
 parser.add_argument('--ft-weight-decay', default=5e-4, type=float)
@@ -95,8 +95,9 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
 
     # Create a multitask model with the basis channels estimated above
     mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
-        add_bn_prev_list=[args.add_bn_prev] * len(basis_channels), add_bn_next_list=[args.add_bn_next] * len(basis_channels), num_classes=args.increments[0])
+        add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
+    print(mt_model)
     mt_model.cuda()
     mt_model.load_t1_weights(model)
 
@@ -173,7 +174,7 @@ def main():
         logger.one_time({'seed': args.manual_seed, 'comments': 'Train task '+str(i)})
         logger.set_names(['lr', 'train_stats', 'test_stats'])
 
-        mt_model.add_task(copy_from=0, num_classes=args.increments[i])
+        mt_model.add_task(copy_from=0, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
         mt_model.set_task_id(i)
         mt_model.cuda()
         # print(mtmodel)
