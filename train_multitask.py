@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 # Datasets
 
 parser.add_argument('--jobid', type=str, default='test')
-parser.add_argument('--arch', default='resnet20')
+parser.add_argument('--arch', default='resnet18')
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', const=False, default=False)
 parser.add_argument('--add-bn-next', type=str2bool, nargs='?', const=True, default=True)
 

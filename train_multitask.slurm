@@ -40,97 +40,23 @@ source activate my-pytorch
 
 # Run TensorFlow
 echo
-#time python train_multitask.py --jobid $SLURM_JOB_ID \
-#--arch alexnet_multitask \
-#--add_bn 0 \
-#--manualSeed 535 \
-#--dataset imagenet \
-#--data_path ../../../data/ImageNet \
-#--increments 100 100 100 100 100 100 100 100 100 100 \
-#--validation 0 \
-#--random_classes 0 \
-#--overflow 0 \
-#--lr 0.01 \
-#--weight_decay 0.0005 \
-#--epochs 90 \
-#--schedule 30 60 \
-#--use_universal_conv 1 \
-#--compression 0.50 \
-#--workers 4 \
-#--train_batch 64 \
-#--ft_lr 0.01 \
-#--ft_weight_decay 0.0005 \
-#--ft_epochs 90 \
-#--ft_schedule 30 60
-
-#time python train_multitask.py --jobid $SLURM_JOB_ID \
-#--arch vgg16_multitask \
-#--add_bn 1 \
-#--manualSeed 535 \
-#--dataset tinyimagenet \
-#--data_path ../../../data/tiny-imagenet-200 \
-#--increments 20 20 20 20 20 20 20 20 20 20 \
-#--validation 0 \
-#--random_classes 0 \
-#--overflow 0 \
-#--lr 0.01 \
-#--weight_decay 0.0005 \
-#--epochs 150 \
-#--schedule 70 100 120 \
-#--use_universal_conv 1 \
-#--compression 0.15 \
-#--workers 4 \
-#--train_batch 128 \
-#--ft_lr 0.01 \
-#--ft_weight_decay 0.0005 \
-#--ft_epochs 150 \
-#--ft_schedule 70 100 120
-
 time python train_multitask.py --jobid $SLURM_JOB_ID \
---arch resnet32_multitask \
+--arch resnet18 \
 --dataset cifar100 \
---add_bn_prev 0 \
---add_bn_next 1 \
---data_path ../../../data/CIFAR \
---increments 50 50 \
+--add-bn-prev 0 \
+--add-bn-next 1 \
+--data-path ../../data/CIFAR \
+--increments 10 10 10 10 10 10 10 10 10 10 \
 --validation 0 \
---random_classes 0 \
+--random-classes 0 \
 --overflow 0 \
---lr 0.01 \
---weight_decay 0.005 \
+--lr 0.1 \
+--weight-decay 0.0005 \
 --epochs 250 \
---schedule 100 200 \
---use_universal_conv 1 \
---compression 0.50 \
+--schedule 100 150 200 \
+--compression 1.0 \
 --workers 4 \
---train_batch 64 \
---ft_lr 0.01 \
---ft_weight_decay 0.005 \
---ft_epochs 250 \
---ft_schedule 100 200
-
-#time python train_multitask.py --jobid $SLURM_JOB_ID \
-#--arch resnet32_multitask \
-#--dataset cifar100 \
-#--add_bn_prev 0 \
-#--add_bn_next 1 \
-#--data_path ../../../data/CIFAR \
-#--increments 50 10 10 10 10 10 \
-#--validation 0 \
-#--random_classes 0 \
-#--overflow 0 \
-#--lr 0.01 \
-#--weight_decay 0.005 \
-#--epochs 250 \
-#--schedule 100 200 \
-#--use_universal_conv 1 \
-#--compression 0.15 \
-#--workers 4 \
-#--train_batch 64 \
-#--ft_lr 0.01 \
-#--ft_weight_decay 0.005 \
-#--ft_epochs 250 \
-#--ft_schedule 100 200
+--train-batch 64 \
 
 # python -u trainer.py  --arch=resnet56  --save-dir=checkpoints/$SLURM_JOB_ID
 echo
