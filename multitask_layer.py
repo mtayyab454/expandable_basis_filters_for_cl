@@ -33,13 +33,13 @@ class TaskConv2d(nn.Module):
         return x
 
 class MultitaskConv2d(nn.Module):
-    def __init__(self, add_bn, in_channels, basis_channels, out_channels, kernel_size, stride, padding, dilation, groups):
+    def __init__(self, add_bn_prev, add_bn_next, in_channels, basis_channels, out_channels, kernel_size, stride, padding, dilation, groups):
         super(MultitaskConv2d, self).__init__()
 
         self.task_id = 0
         # define new convolution layers with F and w
         self.conv_shared = nn.Conv2d(in_channels, basis_channels, kernel_size, stride, padding, dilation, groups, bias=False)
-        tc = TaskConv2d(add_bn_next=add_bn, add_bn_prev=False, in_channels=basis_channels, out_channels=out_channels)
+        tc = TaskConv2d(add_bn_next=add_bn_prev, add_bn_prev=add_bn_next, in_channels=basis_channels, out_channels=out_channels)
 
         self.conv_task = nn.ModuleList()
         self.conv_task.append(tc)

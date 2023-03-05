@@ -141,7 +141,7 @@ def resnet1202(num_classes):
 from multitask_model import MultiTaskModel
 
 class ResNetMultitask(ResNet, MultiTaskModel):
-    def __init__(self, basis_channels_list, add_bn, block, num_blocks, num_classes):
+    def __init__(self, basis_channels_list, add_bn_prev_list, add_bn_next_list, block, num_blocks, num_classes):
         super().__init__(block, num_blocks)
 
         del self.linear
@@ -150,7 +150,7 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.classifiers.append(nn.Linear(64, num_classes))
 
         self.freeze_preexisitng_bn()
-        self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn)
+        self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
     def load_t1_weights(self, t1_model):
         self.load_state_dict(t1_model.state_dict(), strict=False)
@@ -177,25 +177,25 @@ class ResNetMultitask(ResNet, MultiTaskModel):
 
         return out
 
-def resnet20_multitask(basis_channels_list, add_bn, num_classes):
-    return ResNetMultitask(basis_channels_list, add_bn, BasicBlock, [3, 3, 3], num_classes=num_classes)
+def resnet20_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [3, 3, 3], num_classes=num_classes)
 
 
-def resnet32_multitask(basis_channels_list, add_bn, num_classes):
-    return ResNetMultitask(basis_channels_list, add_bn, BasicBlock, [5, 5, 5], num_classes=num_classes)
+def resnet32_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [5, 5, 5], num_classes=num_classes)
 
 
-def resnet44_multitask(basis_channels_list, add_bn, num_classes):
-    return ResNetMultitask(basis_channels_list, add_bn, BasicBlock, [7, 7, 7], num_classes=num_classes)
+def resnet44_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [7, 7, 7], num_classes=num_classes)
 
 
-def resnet56_multitask(basis_channels_list, add_bn, num_classes):
-    return ResNetMultitask(basis_channels_list, add_bn, BasicBlock, [9, 9, 9], num_classes=num_classes)
+def resnet56_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [9, 9, 9], num_classes=num_classes)
 
 
-def resnet110_multitask(basis_channels_list, add_bn, num_classes):
-    return ResNetMultitask(basis_channels_list, add_bn, BasicBlock, [18, 18, 18], num_classes=num_classes)
+def resnet110_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [18, 18, 18], num_classes=num_classes)
 
 
-def resnet1202_multitask(basis_channels_list, add_bn, num_classes):
-    return ResNetMultitask(basis_channels_list, add_bn, BasicBlock, [200, 200, 200], num_classes=num_classes)
+def resnet1202_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [200, 200, 200], num_classes=num_classes)

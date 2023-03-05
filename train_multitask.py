@@ -94,8 +94,8 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
     print(basis_channels)
 
     # Create a multitask model with the basis channels estimated above
-    mt_model = models.__dict__[args.arch + '_multitask'](basis_channels, [False] * len(basis_channels),
-                                                         args.increments[0])
+    mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
+        add_bn_prev_list=[args.add_bn_prev] * len(basis_channels), add_bn_next_list=[args.add_bn_next] * len(basis_channels), num_classes=args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
     mt_model.cuda()
     mt_model.load_t1_weights(model)

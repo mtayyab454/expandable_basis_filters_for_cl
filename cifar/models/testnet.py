@@ -23,7 +23,7 @@ class MySmallCNN(nn.Module):
 
 from multitask_model import MultiTaskModel
 class SmallCNNMultitask(MySmallCNN, MultiTaskModel):
-    def __init__(self, basis_channels_list, add_bn):
+    def __init__(self, basis_channels_list, add_bn_prev_list, add_bn_next_list):
         super().__init__()
 
         del self.linear
@@ -32,7 +32,7 @@ class SmallCNNMultitask(MySmallCNN, MultiTaskModel):
         self.classifiers.append(nn.Linear(12*8*8, 10))
 
         self.freeze_preexisitng_bn()
-        self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn)
+        self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
     def load_t1_weights(self, t1_model):
         self.load_state_dict(t1_model.state_dict(), strict=False)
@@ -55,5 +55,5 @@ class SmallCNNMultitask(MySmallCNN, MultiTaskModel):
 
 def testcnn(num_classes):
     return MySmallCNN()
-def testcnn_multitask(basis_channels_list, add_bn, num_classes):
-    return SmallCNNMultitask(basis_channels_list, add_bn)
+def testcnn_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+    return SmallCNNMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list)
