@@ -44,7 +44,8 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=0, type=int)
 parser.add_argument('--compression', default=1.0, type=float)
 # Task1 options
-parser.add_argument('--epochs', default=1, type=int)
+parser.add_argument('--display-gap', default=50, type=int)
+parser.add_argument('--epochs', default=5, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 

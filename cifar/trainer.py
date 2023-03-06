@@ -173,14 +173,16 @@ def training_loop_multitask(model, optimizer, task_id, train_loaders, test_loade
         lr = adjust_learning_rate(optimizer, lr, epoch, args.schedule, args.gamma)
 
         print('\nTask ID: [%d] - Epoch: [%d | %d] LR: %f' % (task_id, epoch + 1, args.epochs, lr))
-        print('Training...')
+        # print('Training...')
         train_stats = train(train_loaders[task_id], model, args, optimizer, criterion, task_id, logger.keys)
 
-        print('Testing...')
+        # print('Testing...')
         test_stats = test(test_loaders[task_id], model, args, criterion, task_id, logger.keys)
-        print('\nKeys: ', logger.keys)
-        print('Training: ', train_stats)
-        print('Testing: ', test_stats)
+
+        if epoch % args.display_gap == 0:
+            print('\nKeys: ', logger.keys)
+            print('Training: ', train_stats)
+            print('Testing: ', test_stats)
 
         torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model'+str(task_id) + '.pth'))
 
