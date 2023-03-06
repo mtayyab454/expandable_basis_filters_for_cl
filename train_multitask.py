@@ -123,7 +123,7 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
     mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
         add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
-    # print(mt_model)
+    print(mt_model)
     mt_model.cuda()
     mt_model.load_t1_weights(model)
 

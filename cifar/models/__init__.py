@@ -66,5 +66,5 @@ from .vgg import *
 from .resnet import *
 from .wideresnet import *
 from .densenet import *
-# from .resnet_EFT import *
-from .resnet_eft_nobn import *
+from .resnet_eft import *
+# from .resnet_eft_nobn import *

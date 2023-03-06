@@ -120,13 +120,14 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.classifiers = nn.ModuleList()
         self.classifiers.append(nn.Linear(512 * block.expansion, num_classes))
 
+        self.freeze_preexisitng_bn()
         self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
-    def load_t1_weights(self, t1_model):
-        self.load_state_dict(t1_model.state_dict(), strict=False)
-        self.classifiers[0].weight.data = t1_model.linear.weight.data.clone()
-        self.classifiers[0].bias.data = t1_model.linear.bias.data.clone()
-        super().load_t1_weights(t1_model)
+    # def load_t1_weights(self, t1_model):
+    #     self.load_state_dict(t1_model.state_dict(), strict=False)
+    #     self.classifiers[0].weight.data = t1_model.linear.weight.data.clone()
+    #     self.classifiers[0].bias.data = t1_model.linear.bias.data.clone()
+    #     super().load_t1_weights(t1_model)
 
     def set_task_id(self, id):
         self.task_id = id
