@@ -18,7 +18,7 @@ def train(trainloader, model, args, optimizer, criterion, task_id, keys, talk=Fa
     accumulator = VectorAccumulator(keys)
     end = time.time()
 
-    for batch_idx, (inputs, targets) in enumerate(Progressbar(trainloader, talk=False)):
+    for batch_idx, (inputs, targets) in enumerate(Progressbar(trainloader, talk=talk)):
         inputs, targets1 = inputs.cuda(), targets.cuda()
         targets = targets1 - sum(args.increments[:task_id])
 
@@ -171,18 +171,11 @@ def training_loop_multitask(model, optimizer, task_id, train_loaders, test_loade
     best_model = copy.deepcopy(model)
     for epoch in range(args.epochs):
         lr = adjust_learning_rate(optimizer, lr, epoch, args.schedule, args.gamma)
-
-        print('\nTask ID: [%d] - Epoch: [%d | %d] LR: %f' % (task_id, epoch + 1, args.epochs, lr))
         # print('Training...')
         train_stats = train(train_loaders[task_id], model, args, optimizer, criterion, task_id, logger.keys)
 
         # print('Testing...')
         test_stats = test(test_loaders[task_id], model, args, criterion, task_id, logger.keys)
-
-        if epoch % args.display_gap == 0:
-            print('\nKeys: ', logger.keys)
-            print('Training: ', train_stats)
-            print('Testing: ', test_stats)
 
         torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model'+str(task_id) + '.pth'))
 
@@ -192,8 +185,14 @@ def training_loop_multitask(model, optimizer, task_id, train_loaders, test_loade
             if save_best:
                 torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model'+str(task_id)+'_best.pth'))
 
-        print('Best Acc: ', best_acc)
         logger.append([lr, train_stats, test_stats])
+
+        if epoch % args.display_gap == 0:
+            print('\nTask ID: [%d] - Epoch: [%d | %d] LR: %f' % (task_id, epoch + 1, args.epochs, lr))
+            print('\nKeys: ', logger.keys)
+            print('Training: ', train_stats)
+            print('Testing: ', test_stats)
+            print('Best Acc: ', best_acc)
 
     print('\nKeys: ', logger.keys)
     ts_vec = []

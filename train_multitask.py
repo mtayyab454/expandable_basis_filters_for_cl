@@ -44,8 +44,9 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=0, type=int)
 parser.add_argument('--compression', default=1.0, type=float)
 # Task1 options
-parser.add_argument('--display-gap', default=50, type=int)
-parser.add_argument('--epochs', default=5, type=int)
+parser.add_argument('--display-gap', default=5, type=int)
+
+parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
@@ -154,6 +155,8 @@ def train_task1(model, train_loaders, test_loaders, args, save_best):
 
     return mt_model
 
+def empty_fun(x):
+    pass
 def main():
     print(args)
     args.num_class = sum(args.increments)
@@ -163,7 +166,7 @@ def main():
     create_dir([args.checkpoint, args.logs])
 
     model = models.__dict__[args.arch](num_classes=args.increments[0])
-    model.set_task_id = lambda x: print('')
+    model.set_task_id = empty_fun
     model.cuda()
 
     train_loaders, test_loaders = get_data_loaders(args)

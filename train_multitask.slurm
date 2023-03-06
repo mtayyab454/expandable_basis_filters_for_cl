@@ -52,14 +52,14 @@ time python train_multitask.py --jobid $SLURM_JOB_ID \
 --overflow 0 \
 --lr 0.1 \
 --weight-decay 0.0005 \
---epochs 10 \
+--epochs 250 \
 --schedule 100 150 200 \
---compression 0.9 \
+--compression 0.7 \
 --workers 4 \
 --train-batch 64 \
 --ft-lr 0.1 \
 --ft-weight-decay 0.0005 \
---ft-epochs 10 \
+--ft-epochs 250 \
 --ft-schedule 100 150 200
 
 # python -u trainer.py  --arch=resnet56  --save-dir=checkpoints/$SLURM_JOB_ID
