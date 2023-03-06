@@ -163,19 +163,20 @@ class MultiTaskModel(nn.Module):
         # Freeze preexisting BatchNorm2d layers
         _freeze_preexisitng_bn(self)
 
-    def replace_bn_with_conv(self):
-        for name, module in self.named_modules():
-            if isinstance(module, nn.BatchNorm2d) and not 'bn_prev' in name and not 'bn_next' in name:
-                conv = convert_bn_to_conv(module)
-
-                for param in conv.parameters():
-                    param.requires_grad = False
-                conv.eval()
-
-                set_layer(self, name, conv)
-        # print('done')
+    # def replace_bn_with_conv(self):
+    #     for name, module in self.named_modules():
+    #         if isinstance(module, nn.BatchNorm2d) and not 'bn_prev' in name and not 'bn_next' in name:
+    #             conv = convert_bn_to_conv(module)
+    #
+    #             for param in conv.parameters():
+    #                 param.requires_grad = False
+    #             conv.eval()
+    #
+    #             set_layer(self, name, conv)
+    #     # print('done')
 
     def load_t1_weights(self, t1_model):
+        assert len(self.classifiers) == 1, 'This fucntion should only be called when model has just one task'
 
         self.load_state_dict(t1_model.state_dict(), strict=False)
         self.classifiers[0].weight.data = t1_model.linear.weight.data.clone()
