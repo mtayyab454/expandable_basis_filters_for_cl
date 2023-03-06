@@ -5,7 +5,6 @@ import torch.nn as nn
 
 from multitask_layer import MultitaskConv2d
 
-
 def trace_model(model):
     in_channels, out_channels, basis_channels, layer_type = [], [], [], []
 
@@ -26,7 +25,6 @@ def trace_model(model):
     num_linear = sum(1 for lt in layer_type if lt == 'linear')
 
     return num_conv, num_linear, in_channels, out_channels, basis_channels, layer_type
-
 
 def get_basis_channels_from_t(model, t):
     assert all(0 <= x <= 1 for x in t), "Values of t must be between 0 and 1"
@@ -50,7 +48,6 @@ def get_basis_channels_from_t(model, t):
             basis_channels.append(min(idx + 1, module.in_channels * module.kernel_size[0] * module.kernel_size[1]))
 
     return in_channels, out_channels, basis_channels
-
 
 def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_list, add_bn_next_list):
     """
@@ -101,13 +98,11 @@ def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_li
             # Recursively apply the function to the child module
             _replace_conv2d_with_basisconv2d(child_module, basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
-
 def get_layer(model, name):
     layer = model
     for attr in name.split("."):
         layer = getattr(layer, attr)
     return layer
-
 
 def set_layer(model, name, layer):
     try:
@@ -116,32 +111,6 @@ def set_layer(model, name, layer):
     except ValueError:
         pass
     setattr(model, name, layer)
-
-
-def convert_bn_to_conv(bn):
-    #
-    # init
-    conv = torch.nn.Conv2d(
-        bn.bias.shape[0],
-        bn.bias.shape[0],
-        kernel_size=1,
-        stride=1,
-        padding=0,
-        bias=True
-    )
-    #
-    # prepare filters
-    w_bn = torch.diag(bn.weight.data.div(torch.sqrt(bn.eps + bn.running_var)))
-    conv.weight.data.copy_(w_bn.data.view(conv.weight.size()))
-    #
-    # prepare spatial bias
-
-    b_bn = bn.bias - bn.weight.data.mul(bn.running_mean).div(torch.sqrt(bn.running_var + bn.eps))
-    conv.bias.data.copy_(b_bn.data)
-    #
-    # we're done
-    return conv
-
 
 def fuse_conv_and_bn(conv, bn):
     #
@@ -173,22 +142,6 @@ def fuse_conv_and_bn(conv, bn):
     # we're done
     return fusedconv
 
-
-def _freeze_preexisitng_bn(parent_module):
-    for name, module in parent_module.named_children():
-
-        if isinstance(module, nn.BatchNorm2d):
-            # print(name)
-            # ptrblck's comment: using track_running_stats=False will always normalize the input activation with
-            # the current batch stats so you would have to make sure that enough samples are passed to the model (even during testing).
-            # module.track_running_stats = False
-            for param in module.parameters():
-                param.requires_grad = False
-            module.eval()
-        elif not isinstance(module, MultitaskConv2d):
-            _freeze_preexisitng_bn(module)
-
-
 class MultiTaskModel(nn.Module):
     def __init__(self):
         super(MultiTaskModel, self).__init__()
@@ -196,10 +149,6 @@ class MultiTaskModel(nn.Module):
 
     def replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list):
         _replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list)
-
-    def freeze_preexisitng_bn(self):
-        # Freeze preexisting BatchNorm2d layers
-        _freeze_preexisitng_bn(self)
 
     def replace_bn_with_sequential(self):
         for name, module in self.named_modules():
