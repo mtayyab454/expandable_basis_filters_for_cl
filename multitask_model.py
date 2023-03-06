@@ -113,43 +113,43 @@ def set_layer(model, name, layer):
         pass
     setattr(model, name, layer)
 
-def convert_bn_to_conv(bn):
-    #
-    # init
-    conv = torch.nn.Conv2d(
-        bn.bias.shape[0],
-        bn.bias.shape[0],
-        kernel_size=1,
-        stride=1,
-        padding=0,
-        bias=True
-    )
-    #
-    # prepare filters
-    w_bn = torch.diag(bn.weight.data.div(torch.sqrt(bn.eps + bn.running_var)))
-    conv.weight.data.copy_(w_bn.data.view(conv.weight.size()))
-    #
-    # prepare spatial bias
-
-    b_bn = bn.bias - bn.weight.data.mul(bn.running_mean).div(torch.sqrt(bn.running_var + bn.eps))
-    conv.bias.data.copy_(b_bn.data)
-    #
-    # we're done
-    return conv
-
-def _freeze_preexisitng_bn(parent_module):
-    for name, module in parent_module.named_children():
-
-        if isinstance(module, nn.BatchNorm2d):
-            # print(name)
-            # ptrblck's comment: using track_running_stats=False will always normalize the input activation with
-            # the current batch stats so you would have to make sure that enough samples are passed to the model (even during testing).
-            # module.track_running_stats = False
-            for param in module.parameters():
-                param.requires_grad = False
-            module.eval()
-        elif not isinstance(module, MultitaskConv2d):
-            _freeze_preexisitng_bn(module)
+# def convert_bn_to_conv(bn):
+#     #
+#     # init
+#     conv = torch.nn.Conv2d(
+#         bn.bias.shape[0],
+#         bn.bias.shape[0],
+#         kernel_size=1,
+#         stride=1,
+#         padding=0,
+#         bias=True
+#     )
+#     #
+#     # prepare filters
+#     w_bn = torch.diag(bn.weight.data.div(torch.sqrt(bn.eps + bn.running_var)))
+#     conv.weight.data.copy_(w_bn.data.view(conv.weight.size()))
+#     #
+#     # prepare spatial bias
+#
+#     b_bn = bn.bias - bn.weight.data.mul(bn.running_mean).div(torch.sqrt(bn.running_var + bn.eps))
+#     conv.bias.data.copy_(b_bn.data)
+#     #
+#     # we're done
+#     return conv
+#
+# def _freeze_preexisitng_bn(parent_module):
+#     for name, module in parent_module.named_children():
+#
+#         if isinstance(module, nn.BatchNorm2d):
+#             # print(name)
+#             # ptrblck's comment: using track_running_stats=False will always normalize the input activation with
+#             # the current batch stats so you would have to make sure that enough samples are passed to the model (even during testing).
+#             # module.track_running_stats = False
+#             for param in module.parameters():
+#                 param.requires_grad = False
+#             module.eval()
+#         elif not isinstance(module, MultitaskConv2d):
+#             _freeze_preexisitng_bn(module)
 
 class MultiTaskModel(nn.Module):
     def __init__(self):
@@ -159,22 +159,22 @@ class MultiTaskModel(nn.Module):
     def replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list):
         _replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
-    def freeze_preexisitng_bn(self):
-        # Freeze preexisting BatchNorm2d layers
-        _freeze_preexisitng_bn(self)
-
-    def replace_bn_with_conv(self):
-        for name, module in self.named_modules():
-            if isinstance(module, nn.BatchNorm2d) and not 'bn_prev' in name and not 'bn_next' in name:
-                conv = convert_bn_to_conv(module)
-
-                for param in conv.parameters():
-                    param.requires_grad = False
-                conv.eval()
-
-                set_layer(self, name, conv)
-
-        # print('done')
+    # def freeze_preexisitng_bn(self):
+    #     # Freeze preexisting BatchNorm2d layers
+    #     _freeze_preexisitng_bn(self)
+    #
+    # def replace_bn_with_conv(self):
+    #     for name, module in self.named_modules():
+    #         if isinstance(module, nn.BatchNorm2d) and not 'bn_prev' in name and not 'bn_next' in name:
+    #             conv = convert_bn_to_conv(module)
+    #
+    #             for param in conv.parameters():
+    #                 param.requires_grad = False
+    #             conv.eval()
+    #
+    #             set_layer(self, name, conv)
+    #
+    #     # print('done')
 
     def load_t1_weights(self, t1_model):
 
@@ -199,6 +199,22 @@ class MultiTaskModel(nn.Module):
         for name, module in self.named_modules():
             if isinstance(module, MultitaskConv2d):
                 module.task_id = id
+
+    # def train(self, mode=True):
+    #     for name, module in self.named_modules():
+    #         module.eval()
+    #
+    #     for name, module in self.named_modules():
+    #         if isinstance(module, MultitaskConv2d):
+    #             if self.task_id == 0:
+    #                 module.conv_shared.eval()
+    #             else:
+    #                 module.conv_shared.train()
+    #
+    #             module.conv_task[self.task_id].train()
+    #
+    #     self.classifiers[self.task_id].train()
+
 
     def add_task(self, copy_from, add_bn_prev_list, add_bn_next_list, num_classes):
 

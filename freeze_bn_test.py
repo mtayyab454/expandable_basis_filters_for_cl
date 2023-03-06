@@ -5,33 +5,36 @@ import torch.nn as nn
 class MyModel(nn.Module):
     def __init__(self):
         super(MyModel, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(128)
-        self.fc = nn.Linear(128 * 7 * 7, 10)
+        self.fc1 = nn.Linear(4, 6, bias=False)
+        self.fc2 = nn.Linear(6, 8, bias=False)
+        self.fc3 = nn.Linear(8, 2, bias=False)
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = nn.functional.relu(x)
-        x = self.conv2(x)
-        x = self.bn2(x)
-        x = nn.functional.relu(x)
-        x = x.view(-1, 128 * 7 * 7)
-        x = self.fc(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = self.fc3(x)
         return x
+
+    def print_w(self):
+        print(self.fc1.weight)
+        print(self.fc2.weight)
+        print(self.fc3.weight)
+
+    def freeze(self):
+        self.fc1.weight.requires_grad = False
 
 # create an instance of your model
 model = MyModel()
+model.freeze()
+model.train()
+model.print_w()
+x = torch.randn(1, 4)
+y = torch.randn(1, 2)
 
-# freeze the weights of BN layers
-for name, param in model.named_parameters():
-    if 'bn' in name:
-        param.requires_grad = False
+optimizer = torch.optim.SGD(model.parameters(), 0.9, 0.9, 5e-4)
+y_ = model(x)
 
-net = nn.Sequential()
-x = torch.randn(1, 3, 32, 32)
-y = net(x)
-
-print(y-x)
+loss = torch.sum(y - y_)
+loss.backward()
+optimizer.step()
+model.print_w()

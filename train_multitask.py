@@ -27,12 +27,12 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 
 parser.add_argument('--jobid', type=str, default='test')
 parser.add_argument('--arch', default='resnet18')
-parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=True)
-parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
+parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
+parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=False)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
-parser.add_argument('--increments', type=int, nargs='+', default=[5]*20)
+parser.add_argument('--increments', type=int, nargs='+', default=[10]*10)
 parser.add_argument('--validation', default=0, type=int)
 
 parser.add_argument('--random-classes', type=str2bool, nargs='?', const=True, default=False)
@@ -41,8 +41,8 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 # parser.add_argument('--starting-tid', type=int, default=0)
 # # checkpoint/132937_resnet32_multitask/model0_best.pth
 # parser.add_argument('--pretrained-cp', type=str, default='')
-parser.add_argument('-j', '--workers', default=4, type=int)
-parser.add_argument('--compression', default=0.99999, type=float)
+parser.add_argument('-j', '--workers', default=0, type=int)
+parser.add_argument('--compression', default=1.0, type=float)
 # Task1 options
 parser.add_argument('--epochs', default=1, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
@@ -162,6 +162,7 @@ def main():
     create_dir([args.checkpoint, args.logs])
 
     model = models.__dict__[args.arch](num_classes=args.increments[0])
+    model.set_task_id = lambda x: print('')
     model.cuda()
 
     train_loaders, test_loaders = get_data_loaders(args)
@@ -192,7 +193,7 @@ def main():
         mt_model.add_task(copy_from=0, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
         mt_model.set_task_id(i)
         mt_model.cuda()
-        # print(mtmodel)
+        # print(mt_model)
 
         # Training model
         optimizer = optim.SGD(mt_model.get_task_parameter(i), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)

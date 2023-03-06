@@ -13,6 +13,7 @@ mse.cuda()
 def train(trainloader, model, args, optimizer, criterion, task_id, keys, talk=False):
     # print('Training...')
     model.train()
+    model.set_task_id(task_id)
 
     accumulator = VectorAccumulator(keys)
     end = time.time()
@@ -44,6 +45,7 @@ def test(testloader, model, args, criterion, task_id, keys, talk=False):
     # print('Testing...')
     # switch to evaluate mode
     model.eval()
+    model.set_task_id(task_id)
 
     accumulator = VectorAccumulator(keys)
     end = time.time()
