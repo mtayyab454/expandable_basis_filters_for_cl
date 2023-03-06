@@ -138,7 +138,7 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.classifiers = nn.ModuleList()
         self.classifiers.append(nn.Linear(64, num_classes))
 
-        self.freeze_preexisitng_bn()
+        self.replace_bn_with_conv()
         self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
     def load_t1_weights(self, t1_model):

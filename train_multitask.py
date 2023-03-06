@@ -32,7 +32,7 @@ parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
-parser.add_argument('--increments', type=int, nargs='+', default=[25, 25, 25, 25])
+parser.add_argument('--increments', type=int, nargs='+', default=[5]*20)
 parser.add_argument('--validation', default=0, type=int)
 
 parser.add_argument('--random-classes', type=str2bool, nargs='?', const=True, default=False)
