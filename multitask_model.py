@@ -27,6 +27,7 @@ def trace_model(model):
 
     return num_conv, num_linear, in_channels, out_channels, basis_channels, layer_type
 
+
 def get_basis_channels_from_t(model, t):
     assert all(0 <= x <= 1 for x in t), "Values of t must be between 0 and 1"
 
@@ -49,6 +50,7 @@ def get_basis_channels_from_t(model, t):
             basis_channels.append(min(idx + 1, module.in_channels * module.kernel_size[0] * module.kernel_size[1]))
 
     return in_channels, out_channels, basis_channels
+
 
 def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_list, add_bn_next_list):
     """
@@ -99,11 +101,13 @@ def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_li
             # Recursively apply the function to the child module
             _replace_conv2d_with_basisconv2d(child_module, basis_channels_list, add_bn_prev_list, add_bn_next_list)
 
+
 def get_layer(model, name):
     layer = model
     for attr in name.split("."):
         layer = getattr(layer, attr)
     return layer
+
 
 def set_layer(model, name, layer):
     try:
@@ -112,6 +116,7 @@ def set_layer(model, name, layer):
     except ValueError:
         pass
     setattr(model, name, layer)
+
 
 def convert_bn_to_conv(bn):
     #
@@ -137,6 +142,38 @@ def convert_bn_to_conv(bn):
     # we're done
     return conv
 
+
+def fuse_conv_and_bn(conv, bn):
+    #
+    # init
+    fusedconv = torch.nn.Conv2d(
+        conv.in_channels,
+        conv.out_channels,
+        kernel_size=conv.kernel_size,
+        stride=conv.stride,
+        padding=conv.padding,
+        bias=True
+    )
+    fusedconv.to(conv.weight.device)
+    #
+    # prepare filters
+    w_conv = conv.weight.clone().view(conv.out_channels, -1)
+    w_bn = torch.diag(bn.weight.div(torch.sqrt(bn.eps + bn.running_var)))
+    fusedconv.weight.data.copy_(torch.mm(w_bn, w_conv).view(fusedconv.weight.size()))
+    #
+    # prepare spatial bias
+    if conv.bias is not None:
+        b_conv = conv.bias
+    else:
+        b_conv = torch.zeros(conv.weight.size(0))
+        b_conv = b_conv.to(conv.weight.device)
+    b_bn = bn.bias - bn.weight.mul(bn.running_mean).div(torch.sqrt(bn.running_var + bn.eps))
+    fusedconv.bias.data.copy_(torch.matmul(w_bn, b_conv) + b_bn)
+    #
+    # we're done
+    return fusedconv
+
+
 def _freeze_preexisitng_bn(parent_module):
     for name, module in parent_module.named_children():
 
@@ -144,12 +181,13 @@ def _freeze_preexisitng_bn(parent_module):
             # print(name)
             # ptrblck's comment: using track_running_stats=False will always normalize the input activation with
             # the current batch stats so you would have to make sure that enough samples are passed to the model (even during testing).
-            module.track_running_stats = False
+            # module.track_running_stats = False
             for param in module.parameters():
                 param.requires_grad = False
             module.eval()
         elif not isinstance(module, MultitaskConv2d):
             _freeze_preexisitng_bn(module)
+
 
 class MultiTaskModel(nn.Module):
     def __init__(self):
@@ -163,58 +201,16 @@ class MultiTaskModel(nn.Module):
         # Freeze preexisting BatchNorm2d layers
         _freeze_preexisitng_bn(self)
 
-    # def replace_bn_with_conv(self):
-    #     for name, module in self.named_modules():
-    #         if isinstance(module, nn.BatchNorm2d) and not 'bn_prev' in name and not 'bn_next' in name:
-    #             conv = convert_bn_to_conv(module)
-    #
-    #             for param in conv.parameters():
-    #                 param.requires_grad = False
-    #             conv.eval()
-    #
-    #             set_layer(self, name, conv)
-    #     # print('done')
-
-    def load_t1_weights(self, t1_model):
-        assert len(self.classifiers) == 1, 'This fucntion should only be called when model has just one task'
-
-        self.load_state_dict(t1_model.state_dict(), strict=False)
-        self.classifiers[0].weight.data = t1_model.linear.weight.data.clone()
-        self.classifiers[0].bias.data = t1_model.linear.bias.data.clone()
-
-        basis_modules = []
-        for basis_module in self.modules():
-            if isinstance(basis_module, MultitaskConv2d):
-                basis_modules.append(basis_module)
-
-        conv_modules = []
-        for conv_module in t1_model.modules():
-            if isinstance(conv_module, nn.Conv2d):
-                conv_modules.append(conv_module)
-
-        for basis_module, conv_module in zip(basis_modules, conv_modules):
-            basis_module.init_weights_from_conv2d(conv_module)
+    def replace_bn_with_sequential(self):
+        for name, module in self.named_modules():
+            if isinstance(module, nn.BatchNorm2d):
+                set_layer(self, name, nn.Sequential())
+        # print('done')
 
     def set_task_id(self, id):
         for name, module in self.named_modules():
             if isinstance(module, MultitaskConv2d):
                 module.task_id = id
-
-    # def train(self, mode=True):
-    #     for name, module in self.named_modules():
-    #         module.eval()
-    #
-    #     for name, module in self.named_modules():
-    #         if isinstance(module, MultitaskConv2d):
-    #             if self.task_id == 0:
-    #                 module.conv_shared.eval()
-    #             else:
-    #                 module.conv_shared.train()
-    #
-    #             module.conv_task[self.task_id].train()
-    #
-    #     self.classifiers[self.task_id].train()
-
 
     def add_task(self, copy_from, add_bn_prev_list, add_bn_next_list, num_classes):
 

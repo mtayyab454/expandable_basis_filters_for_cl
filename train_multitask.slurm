@@ -42,6 +42,7 @@ source activate my-pytorch
 echo
 time python train_multitask.py --jobid $SLURM_JOB_ID \
 --arch resnet18 \
+--display-gap 50 \
 --dataset cifar100 \
 --add-bn-prev 0 \
 --add-bn-next 1 \
@@ -53,8 +54,8 @@ time python train_multitask.py --jobid $SLURM_JOB_ID \
 --lr 0.1 \
 --weight-decay 0.0005 \
 --epochs 250 \
---schedule 100 150 200 \
---compression 0.7 \
+--schedule 100 200 \
+--compression 1.0 \
 --workers 4 \
 --train-batch 64 \
 --ft-lr 0.1 \

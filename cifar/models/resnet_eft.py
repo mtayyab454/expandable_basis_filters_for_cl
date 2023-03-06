@@ -109,7 +109,7 @@ def resnet18(num_classes):
 
 ########################################################################################################################
 
-from multitask_model import MultiTaskModel
+from multitask_model import MultiTaskModel, MultitaskConv2d, fuse_conv_and_bn
 
 class ResNetMultitask(ResNet, MultiTaskModel):
     def __init__(self, basis_channels_list, add_bn_prev_list, add_bn_next_list, block, num_blocks, num_classes):
@@ -120,8 +120,37 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.classifiers = nn.ModuleList()
         self.classifiers.append(nn.Linear(512 * block.expansion, num_classes))
 
-        self.freeze_preexisitng_bn()
+        self.replace_bn_with_sequential()
         self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list)
+
+    def load_t1_weights(self, t1_model):
+        assert len(self.classifiers) == 1, 'This fucntion should only be called when model has just one task'
+
+        self.load_state_dict(t1_model.state_dict(), strict=False)
+        self.classifiers[0].weight.data = t1_model.linear.weight.data.clone()
+        self.classifiers[0].bias.data = t1_model.linear.bias.data.clone()
+
+        # Find all MultitaskConv2d in basis_model
+        basis_modules = []
+        for basis_module in self.modules():
+            if isinstance(basis_module, MultitaskConv2d):
+                basis_modules.append(basis_module)
+
+        # Find all Conv2d in conv_model
+        conv_modules = []
+        for conv_module in t1_model.modules():
+            if isinstance(conv_module, nn.Conv2d):
+                conv_modules.append(conv_module)
+
+        # Find all Batchnorm2d in conv_model
+        bn_modules = []
+        for bn_module in t1_model.modules():
+            if isinstance(bn_module, nn.BatchNorm2d):
+                bn_modules.append(bn_module)
+
+        for basis_module, conv_module, bn_module in zip(basis_modules, conv_modules, bn_modules):
+            fused_conv = fuse_conv_and_bn(conv_module, bn_module)
+            basis_module.init_weights_from_conv2d(fused_conv)
 
     def set_task_id(self, id):
         self.task_id = id

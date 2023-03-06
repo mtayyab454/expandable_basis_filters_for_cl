@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
 parser.add_argument('--jobid', type=str, default='test')
 parser.add_argument('--arch', default='resnet18')
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
-parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=False)
+parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
@@ -44,9 +44,9 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 parser.add_argument('-j', '--workers', default=0, type=int)
 parser.add_argument('--compression', default=1.0, type=float)
 # Task1 options
-parser.add_argument('--display-gap', default=5, type=int)
+parser.add_argument('--display-gap', default=3, type=int)
 
-parser.add_argument('--epochs', default=100, type=int)
+parser.add_argument('--epochs', default=3, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
