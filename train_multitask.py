@@ -74,6 +74,13 @@ random.seed(args.manual_seed)
 torch.manual_seed(args.manual_seed)
 torch.cuda.manual_seed_all(args.manual_seed)
 
+def get_logger(fname, comment):
+    logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname=fname,
+                    keys=['time', 'acc1', 'acc5', 'ce_loss'])
+    logger.one_time({'seed': args.manual_seed, 'comments': comment})
+    logger.set_names(['lr', 'train_stats', 'test_stats'])
+
+    return logger
 def get_data_loaders(args):
     train_loaders = []
     test_loaders = []
@@ -98,63 +105,6 @@ def get_data_loaders(args):
 
     return train_loaders, test_loaders
 
-def train_task1(model, train_loaders, test_loaders, args, save_best):
-    ###########################################################################
-    ####################### Train Conv Model on Task 1 ########################
-    ###########################################################################
-
-
-    logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task0',
-                    keys=['time', 'acc1', 'acc5', 'ce_loss'])
-    logger.one_time({'seed': args.manual_seed, 'comments': 'Train task 0'})
-    logger.set_names(['lr', 'train_stats', 'test_stats'])
-    print('\n\n'+ '_'*90 +'\n')
-    print('Training task: 0')
-
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-
-    model = training_loop_multitask(model=model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
-                                    test_loaders=test_loaders, logger=logger, args=args,
-                                    save_best=save_best)
-
-    num_conv, num_linear, in_channels, out_channels, basis_channels, layer_type = trace_model(model)
-    _, _, basis_channels = get_basis_channels_from_t(model, [args.compression] * num_conv)
-    print(basis_channels)
-
-    # Create a multitask model with the basis channels estimated above
-    mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
-        add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
-    # Initilize the task 1 parameters of multitask model using the weights of conv2d model
-    print(mt_model)
-    mt_model.cuda()
-    mt_model.load_t1_weights(model)
-
-    ###########################################################################
-    ##################### Finetune Conv Model on Task 1 #######################
-    ###########################################################################
-
-    if args.compression < 1.0 or args.add_bn_prev: # Finetune
-
-        logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task0_ft',
-                        keys=['time', 'acc1', 'acc5', 'ce_loss'])
-        logger.one_time({'seed': args.manual_seed, 'comments': 'Finetune task 0'})
-        logger.set_names(['lr', 'train_stats', 'test_stats'])
-
-        print('\n\n###########################################\n')
-        print('Finetuning task 0')
-        [epochs, schedule, lr, weight_decay] = args.epochs, args.schedule, args.lr, args.weight_decay
-        args.epochs, args.schedule, args.lr, args.weight_decay = args.ft_epochs, args.ft_schedule, args.ft_lr, args.ft_weight_decay
-
-        optimizer = optim.SGD(mt_model.get_task_parameter(0), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-
-        mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
-                                        test_loaders=test_loaders, logger=logger, args=args,
-                                        save_best=save_best)
-
-        [args.epochs, args.schedule, args.lr, args.weight_decay] = epochs, schedule, lr, weight_decay
-
-    return mt_model
-
 def empty_fun(x):
     pass
 def main():
@@ -174,7 +124,51 @@ def main():
     class_incrimental_accuracy = []
     task_prediction_accuracy = []
 
-    mt_model = train_task1(model=model, train_loaders=train_loaders, test_loaders=test_loaders, args=args, save_best=True)
+    ###########################################################################
+    ####################### Train Conv Model on Task 1 ########################
+    ###########################################################################
+
+    logger = get_logger(fname='task0', comment='Train task 0')
+    print('\n\n'+ '_'*90 +'\n')
+    print('Training task: 0')
+
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+
+    model = training_loop_multitask(model=model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
+                                    test_loaders=test_loaders, logger=logger, args=args,
+                                    save_best=True)
+
+    num_conv, num_linear, in_channels, out_channels, basis_channels, layer_type = trace_model(model)
+    _, _, basis_channels = get_basis_channels_from_t(model, [args.compression] * num_conv)
+    print(basis_channels)
+
+    # Create a multitask model with the basis channels estimated above
+    mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
+        add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
+    # Initilize the task 1 parameters of multitask model using the weights of conv2d model
+    print(mt_model)
+    mt_model.cuda()
+    mt_model.load_t1_weights(model)
+
+    ###########################################################################
+    ##################### Finetune Conv Model on Task 1 #######################
+    ###########################################################################
+
+    if args.compression < 1.0 or args.add_bn_prev: # Finetune
+
+        logger = get_logger(fname='task0_ft', comment='Finetune task 0')
+        print('\n\n###########################################\n')
+        print('Finetuning task 0')
+        [epochs, schedule, lr, weight_decay] = args.epochs, args.schedule, args.lr, args.weight_decay
+        args.epochs, args.schedule, args.lr, args.weight_decay = args.ft_epochs, args.ft_schedule, args.ft_lr, args.ft_weight_decay
+
+        optimizer = optim.SGD(mt_model.get_task_parameter(0), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+
+        mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
+                                        test_loaders=test_loaders, logger=logger, args=args,
+                                        save_best=True)
+
+        [args.epochs, args.schedule, args.lr, args.weight_decay] = epochs, schedule, lr, weight_decay
 
     tmp, tmp1 = inference(test_loaders[:1], mt_model, args, 1)
     class_incrimental_accuracy.append(tmp)
@@ -185,11 +179,7 @@ def main():
     ###################################################################################################################
 
     for i in range(1, len(args.increments)):
-        # Setup logger
-        logger = Logger(dir_path=os.path.join(args.logs, args.jobid + '_' + args.arch), fname='task'+str(i),
-                        keys=['time', 'acc1', 'acc5', 'ce_loss'])
-        logger.one_time({'seed': args.manual_seed, 'comments': 'Train task '+str(i)})
-        logger.set_names(['lr', 'train_stats', 'test_stats'])
+        logger = get_logger(fname='task'+str(i), comment='Train task '+str(i))
         print('\n\n'+ '_'*90 +'\n')
         print('Training task: ', i)
 
@@ -197,7 +187,6 @@ def main():
         mt_model.add_task(copy_from=0, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
         mt_model.set_task_id(i)
         mt_model.cuda()
-        # print(mt_model)
 
         # Training model
         optimizer = optim.SGD(mt_model.get_task_parameter(i), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
