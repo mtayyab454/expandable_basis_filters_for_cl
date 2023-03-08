@@ -32,7 +32,7 @@ nvidia-smi topo -m
 echo
 
 # Activate the GPU version of Pytorch
-source activate my-pytorch
+source activate my-pytorch1.13.1
 
 # OR, instead:  Activate the non-GPU version of TensorFlow
 #source activate tensorflow
@@ -57,7 +57,7 @@ time python train_multitask.py --jobid $SLURM_JOB_ID \
 --schedule 100 150 200 \
 --compression 1.0 \
 --workers 4 \
---train-batch 64 \
+--train-batch 256 \
 --ft-lr 0.1 \
 --ft-weight-decay 0.0005 \
 --ft-epochs 250 \

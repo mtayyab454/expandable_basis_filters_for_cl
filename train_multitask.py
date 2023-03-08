@@ -45,6 +45,7 @@ parser.add_argument('-j', '--workers', default=0, type=int)
 parser.add_argument('--compression', default=1.0, type=float)
 # Task1 options
 parser.add_argument('--display-gap', default=3, type=int)
+parser.add_argument('--resume-from', default='./checkpoint/random_init_test_resnet18/model_rand_init.pth', type=str)
 
 parser.add_argument('--epochs', default=3, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
@@ -105,24 +106,33 @@ def get_data_loaders(args):
 
     return train_loaders, test_loaders
 
+def get_starting_tid(resume_from):
+    if 'model_rand_init' in resume_from:
+        starting_tid = 0
+
+    return starting_tid
 def empty_fun(x):
     pass
 def main():
+    print(torch.__version__)
+    print(torch.version.cuda)
     print(args)
-    args.num_class = sum(args.increments)
 
     args.checkpoint = os.path.join(args.checkpoint, args.jobid + '_' + args.arch)
     # backup_code(os.path.join('logs', args.jobid + '_' + args.arch, 'backup'), ['train_multitask.py', 'trainer.py', 'train_multitask.slurm'])
     create_dir([args.checkpoint, args.logs])
 
-    model = models.__dict__[args.arch](num_classes=args.increments[0])
-    model.set_task_id = empty_fun
-    model.cuda()
+    args.num_class = sum(args.increments)
+    starting_tid = get_starting_tid(args.resume_from)
 
     train_loaders, test_loaders = get_data_loaders(args)
 
     class_incrimental_accuracy = []
     task_prediction_accuracy = []
+
+    model = models.__dict__[args.arch](num_classes=args.increments[0])
+    model.set_task_id = empty_fun
+    model.cuda()
 
     ###########################################################################
     ####################### Train Conv Model on Task 1 ########################
