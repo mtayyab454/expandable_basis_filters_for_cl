@@ -1,9 +1,57 @@
-import copy
-
 import torch
 import torch.nn as nn
 
 from multitask_layer import MultitaskConv2d
+
+def measure_flops(model, input_size):
+    input = torch.randn(1, *input_size).to(list(model.parameters())[0].device)
+    from torch.profiler import profile, record_function, ProfilerActivity
+    with profile(activities=[ProfilerActivity.CPU], record_shapes=True, with_flops=True) as prof:
+        with record_function("model_inference"):
+            with torch.no_grad():
+                # model.ensemble_forward(input)
+                model(input)
+    flops = 0
+    for ka in prof.key_averages():
+        flops += ka.flops
+
+    return flops
+
+def count_parameters(basis_model, num_tasks):
+    shared_params = []
+    task_params = []
+
+    for name, module in basis_model.named_modules():
+        if isinstance(module, MultitaskConv2d):
+            shared_params.extend(module.conv_shared.parameters())
+            task_params.extend(module.conv_task[0].parameters())
+
+    # parameter.extend([p.data for p in self.classifiers[task_id].parameters()])
+    task_params.extend( basis_model.classifiers[0].parameters() )
+
+    num_shared_params = sum(p.numel() for p in shared_params)
+    num_task_params = sum(p.numel() for p in task_params)*num_tasks
+
+    return (num_shared_params+num_task_params)
+
+def display_stats(basis_model, model, exp_name, input_size, num_tasks):
+    org_flops = measure_flops(model, input_size)
+    basis_flops = measure_flops(basis_model, input_size)
+    num_model_param = sum(p.numel() for p in model.parameters())
+    num_basis_param = count_parameters(basis_model, num_tasks)
+
+    print_text = f"\n############################################# {exp_name} #############################################\n"
+    print_text += f"\n    Model FLOPs: {org_flops / 10 ** 6:.2f}M"
+    print_text += f"\n    Basis Model FLOPs: {basis_flops / 10 ** 6:.2f}M"
+    print_text += f"\n    % Reduction in FLOPs: {100 - (basis_flops * 100 / org_flops):.2f} %"
+    print_text += f"\n    % Speedup: {org_flops / basis_flops:.2f} %\n"
+
+    print_text += f"\n    Model Total Params: {num_model_param / 10 ** 6:.2f}M"
+    print_text += f"\n    Basis Model Total params: {num_basis_param / 10 ** 6:.2f}M"
+    print_text += f"\n    % Reduction in Total params: {100 - (num_basis_param * 100 / num_model_param):.2f} %\n"
+
+    print(print_text)
+
 
 def trace_model(model):
     in_channels, out_channels, basis_channels, layer_type = [], [], [], []

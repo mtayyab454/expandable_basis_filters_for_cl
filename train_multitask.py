@@ -10,7 +10,7 @@ from utils import Logger, create_dir, backup_code
 from cifar.trainer import testing_loop, training_loop_multitask, inference
 
 import cifar.models as models
-from multitask_model import trace_model, get_basis_channels_from_t
+from multitask_model import trace_model, get_basis_channels_from_t, display_stats
 import incremental_dataloader as data
 def str2bool(v):
     if isinstance(v, bool):
@@ -22,7 +22,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-parser = argparse.ArgumentParser(description='PyTorch CIFAR10/100 Training')
+parser = argparse.ArgumentParser(description='Compressed Continual Learning')
 # Datasets
 
 parser.add_argument('--jobid', type=str, default='test')
@@ -42,12 +42,12 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 # # checkpoint/132937_resnet32_multitask/model0_best.pth
 # parser.add_argument('--pretrained-cp', type=str, default='')
 parser.add_argument('-j', '--workers', default=0, type=int)
-parser.add_argument('--compression', default=1.0, type=float)
+parser.add_argument('--compression', default=0.7, type=float)
 # Task1 options
 parser.add_argument('--display-gap', default=3, type=int)
 parser.add_argument('--resume-from', default='./checkpoint/random_init_test_resnet18/model_rand_init.pth', type=str)
 
-parser.add_argument('--epochs', default=3, type=int)
+parser.add_argument('--epochs', default=1, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
 
@@ -121,9 +121,7 @@ def main():
     args.checkpoint = os.path.join(args.checkpoint, args.jobid + '_' + args.arch)
     # backup_code(os.path.join('logs', args.jobid + '_' + args.arch, 'backup'), ['train_multitask.py', 'trainer.py', 'train_multitask.slurm'])
     create_dir([args.checkpoint, args.logs])
-
     args.num_class = sum(args.increments)
-    starting_tid = get_starting_tid(args.resume_from)
 
     train_loaders, test_loaders = get_data_loaders(args)
 
@@ -156,9 +154,10 @@ def main():
     mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
         add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
-    print(mt_model)
+    # print(mt_model)
     mt_model.cuda()
     mt_model.load_t1_weights(model)
+    display_stats(mt_model, model, args.jobid + '_' + args.arch, [3, 32, 32], len(args.increments))
 
     ###########################################################################
     ##################### Finetune Conv Model on Task 1 #######################
