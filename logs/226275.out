@@ -1,0 +1,134 @@
+Mon Mar  6 23:39:02 EST 2023
+Slurm nodes: evc8
+You were assigned 1 gpu(s)
+Please run `conda env list` to see a list of all available environments. Use
+`source activate <env>` to activate the environment '<env>'. 
+
+Currently Loaded Modules:
+  1) anaconda/anaconda3
+
+ 
+
+	[4mGPU0	mlx5_0	CPU Affinity	NUMA Affinity[0m
+GPU0	 X 	NODE	1,3	1
+mlx5_0	NODE	 X 		
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+
+Namespace(add_bn_next=True, add_bn_prev=False, arch='resnet18', checkpoint='checkpoint', compression=1.0, data_path='../../data/CIFAR', dataset='cifar100', display_gap=50, epochs=250, ft_epochs=250, ft_lr=0.1, ft_schedule=[100, 150, 200], ft_weight_decay=0.0005, gamma=0.1, increments=[10, 10, 10, 10, 10, 10, 10, 10, 10, 10], jobid='226275', logs='logs', lr=0.1, manual_seed=7137, momentum=0.9, overflow=False, random_classes=False, schedule=[100, 150, 200], test_batch=100, train_batch=64, validation=0, weight_decay=0.0005, workers=4)
+Files already downloaded and verified
+Files already downloaded and verified
+0
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+1
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+2
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+3
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+4
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+5
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+6
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+7
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+8
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+9
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+
+
+__________________________________________________________________________________________
+
+Training task: 0
+
+Task ID: [0] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020371521575541437, 18.730221518987342, 67.4248417721519, 3.171475039252752]
+Testing:  [0.08264944553375245, 21.9, 78.9, 2.065890169143677]
+Best Acc:  21.9
+
+Task ID: [0] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.01995191091223608, 84.23655063291139, 99.10996835443038, 0.48249232486079013]
+Testing:  [0.07623755931854248, 73.7, 97.3, 0.8584509015083313]
+Best Acc:  77.2
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [0] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.019286704968802536, 95.82674050632912, 99.96044303797468, 0.13605187705989125]
+Testing:  [0.07118263244628906, 87.2, 98.9, 0.41895030438899994]
+Best Acc:  87.2
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [0] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.017771461341954484, 99.96044303797468, 100.0, 0.007047664156018556]
+Testing:  [0.08452789783477783, 88.1, 99.1, 0.38559641540050504]
+Best Acc:  88.9
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [0] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.01972684075560751, 99.82199367088607, 100.0, 0.008163962374688893]
+Testing:  [0.07357847690582275, 88.2, 98.8, 0.3900729700922966]
+Best Acc:  89.0
+Traceback (most recent call last):
+  File "train_multitask.py", line 208, in <module>
+    main()
+  File "train_multitask.py", line 139, in main
+    save_best=True)
+  File "/lustre/fs0/home/mtayyab/codes/compressed_continual_learning/cifar/trainer.py", line 175, in training_loop_multitask
+    train_stats = train(train_loaders[task_id], model, args, optimizer, criterion, task_id, logger.keys)
+  File "/lustre/fs0/home/mtayyab/codes/compressed_continual_learning/cifar/trainer.py", line 21, in train
+    for batch_idx, (inputs, targets) in enumerate(Progressbar(trainloader, talk=talk)):
+  File "/lustre/fs0/home/mtayyab/codes/compressed_continual_learning/utils.py", line 141, in __next__
+    return self.iter.__next__()
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 521, in __next__
+    data = self._next_data()
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 1203, in _next_data
+    return self._process_data(data)
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 1229, in _process_data
+    data.reraise()
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/_utils.py", line 434, in reraise
+    raise exception
+RuntimeError: Caught RuntimeError in DataLoader worker process 1.
+Original Traceback (most recent call last):
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/_utils/worker.py", line 287, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+    return self.collate_fn(data)
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/_utils/collate.py", line 84, in default_collate
+    return [default_collate(samples) for samples in transposed]
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/_utils/collate.py", line 84, in <listcomp>
+    return [default_collate(samples) for samples in transposed]
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/utils/data/_utils/collate.py", line 54, in default_collate
+    storage = elem.storage()._new_shared(numel)
+  File "/home/mtayyab/my-envs/my-pytorch/lib/python3.6/site-packages/torch/storage.py", line 157, in _new_shared
+    return cls._new_using_fd(size)
+RuntimeError: falseINTERNAL ASSERT FAILED at "../aten/src/ATen/MapAllocator.cpp":263, please report a bug to PyTorch. unable to open shared memory object </torch_164358_0> in read-write mode
+
+
+real	12m46.602s
+user	27m55.625s
+sys	4m25.307s
+
+Ending script...
+Mon Mar  6 23:51:51 EST 2023
