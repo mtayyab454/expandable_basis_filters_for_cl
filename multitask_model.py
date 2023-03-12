@@ -212,7 +212,10 @@ class MultiTaskModel(nn.Module):
     def add_task(self, copy_from, growth_rate, add_bn_prev_list, add_bn_next_list, num_classes):
 
         ln = nn.Linear(self.classifiers[0].weight.shape[1], num_classes)
-        ln.load_state_dict(self.classifiers[copy_from].state_dict())
+        if num_classes == self.classifiers[copy_from].weight.shape[0]:
+            ln.load_state_dict(self.classifiers[copy_from].state_dict())
+        else:
+            print(f'Classifier weights cannot be coppied from task {copy_from} due to missmatch classes')
         self.classifiers.append(ln)
 
         for name, module in self.named_modules():
@@ -227,20 +230,6 @@ class MultiTaskModel(nn.Module):
                 else:
                     add_bn_next = add_bn_next_list
                 module.add_task(copy_from, growth_rate, add_bn_prev, add_bn_next)
-
-    def get_task_parameter(self, task_id):
-        parameter = []
-
-        for name, module in self.named_modules():
-            if isinstance(module, MultitaskConv2d):
-                # parameter.extend([p.data for p in module.conv_task[task_id].parameters()])
-                parameter.extend(module.conv_task[task_id].parameters())
-                parameter.extend(module.shared_weights)
-
-        # parameter.extend([p.data for p in self.classifiers[task_id].parameters()])
-        parameter.extend(self.classifiers[task_id].parameters())
-
-        return parameter
 
     def ensemble_forward(self, x):
         outputs = []
