@@ -43,7 +43,7 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 # parser.add_argument('--pretrained-cp', type=str, default='')
 parser.add_argument('-j', '--workers', default=0, type=int)
 parser.add_argument('--compression', default=0.8, type=float)
-parser.add_argument('--growth-rate', default=0.50, type=float)
+parser.add_argument('--growth-rate', default=0.0, type=float)
 # Task1 options
 parser.add_argument('--display-gap', default=3, type=int)
 parser.add_argument('--resume-from', default='./checkpoint/random_init_test_resnet18/model_rand_init.pth', type=str)
