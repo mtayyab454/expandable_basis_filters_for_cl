@@ -42,7 +42,7 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 # # checkpoint/132937_resnet32_multitask/model0_best.pth
 # parser.add_argument('--pretrained-cp', type=str, default='')
 parser.add_argument('-j', '--workers', default=0, type=int)
-parser.add_argument('--compression', default=1.0, type=float)
+parser.add_argument('--compression', default=0.8, type=float)
 parser.add_argument('--growth-rate', default=0.50, type=float)
 # Task1 options
 parser.add_argument('--display-gap', default=3, type=int)
@@ -107,11 +107,6 @@ def get_data_loaders(args):
 
     return train_loaders, test_loaders
 
-def get_starting_tid(resume_from):
-    if 'model_rand_init' in resume_from:
-        starting_tid = 0
-
-    return starting_tid
 def empty_fun(x):
     pass
 def main():
@@ -172,7 +167,7 @@ def main():
         [epochs, schedule, lr, weight_decay] = args.epochs, args.schedule, args.lr, args.weight_decay
         args.epochs, args.schedule, args.lr, args.weight_decay = args.ft_epochs, args.ft_schedule, args.ft_lr, args.ft_weight_decay
 
-        optimizer = optim.SGD(mt_model.get_task_parameter(0), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+        optimizer = optim.SGD(mt_model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
         mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
                                         test_loaders=test_loaders, logger=logger, args=args,
@@ -199,7 +194,7 @@ def main():
         mt_model.cuda()
 
         # Training model
-        optimizer = optim.SGD(mt_model.get_task_parameter(i), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+        optimizer = optim.SGD(mt_model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
         mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=i, train_loaders=train_loaders, test_loaders=test_loaders, logger=logger, args=args,
                                         save_best=True)
 
