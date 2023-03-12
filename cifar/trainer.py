@@ -177,13 +177,13 @@ def training_loop_multitask(model, optimizer, task_id, train_loaders, test_loade
         # print('Testing...')
         test_stats = test(test_loaders[task_id], model, args, criterion, task_id, logger.keys)
 
-        torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model'+str(task_id) + '.pth'))
+        torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model_'+logger.fname.replace('task', '') + '.pth'))
 
         if best_acc < test_stats[1]:
             best_acc = test_stats[1]
             best_model = copy.deepcopy(model)
             if save_best:
-                torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model'+str(task_id)+'_best.pth'))
+                torch.save(model.state_dict(), os.path.join(args.checkpoint, 'model_'+logger.fname.replace('task', '')+'_best.pth'))
 
         logger.append([lr, train_stats, test_stats])
 
