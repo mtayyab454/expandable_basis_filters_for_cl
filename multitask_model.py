@@ -207,9 +207,9 @@ class MultiTaskModel(nn.Module):
     def set_task_id(self, id):
         for name, module in self.named_modules():
             if isinstance(module, MultitaskConv2d):
-                module.task_id = id
+                module.set_task_id(id)
 
-    def add_task(self, copy_from, add_bn_prev_list, add_bn_next_list, num_classes):
+    def add_task(self, copy_from, growth_rate, add_bn_prev_list, add_bn_next_list, num_classes):
 
         ln = nn.Linear(self.classifiers[0].weight.shape[1], num_classes)
         ln.load_state_dict(self.classifiers[copy_from].state_dict())
@@ -226,7 +226,7 @@ class MultiTaskModel(nn.Module):
                     add_bn_next = add_bn_next_list.pop(0)
                 else:
                     add_bn_next = add_bn_next_list
-                module.add_task(copy_from, add_bn_prev, add_bn_next)
+                module.add_task(copy_from, growth_rate, add_bn_prev, add_bn_next)
 
     def get_task_parameter(self, task_id):
         parameter = []
@@ -235,9 +235,7 @@ class MultiTaskModel(nn.Module):
             if isinstance(module, MultitaskConv2d):
                 # parameter.extend([p.data for p in module.conv_task[task_id].parameters()])
                 parameter.extend(module.conv_task[task_id].parameters())
-                if task_id == 0:
-                    # parameter.extend([p.data for p in module.conv_shared.parameters()])
-                    parameter.extend(module.conv_shared.parameters())
+                parameter.extend(module.shared_weights)
 
         # parameter.extend([p.data for p in self.classifiers[task_id].parameters()])
         parameter.extend(self.classifiers[task_id].parameters())

@@ -42,7 +42,8 @@ parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=
 # # checkpoint/132937_resnet32_multitask/model0_best.pth
 # parser.add_argument('--pretrained-cp', type=str, default='')
 parser.add_argument('-j', '--workers', default=0, type=int)
-parser.add_argument('--compression', default=0.7, type=float)
+parser.add_argument('--compression', default=1.0, type=float)
+parser.add_argument('--growth-rate', default=0.50, type=float)
 # Task1 options
 parser.add_argument('--display-gap', default=3, type=int)
 parser.add_argument('--resume-from', default='./checkpoint/random_init_test_resnet18/model_rand_init.pth', type=str)
@@ -157,7 +158,7 @@ def main():
     # print(mt_model)
     mt_model.cuda()
     mt_model.load_t1_weights(model)
-    display_stats(mt_model, model, args.jobid + '_' + args.arch, [3, 32, 32], len(args.increments))
+    # display_stats(mt_model, model, args.jobid + '_' + args.arch, [3, 32, 32], len(args.increments))
 
     ###########################################################################
     ##################### Finetune Conv Model on Task 1 #######################
@@ -193,7 +194,7 @@ def main():
         print('Training task: ', i)
 
         # Add new task parameters to the model
-        mt_model.add_task(copy_from=0, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
+        mt_model.add_task(copy_from=0, growth_rate=args.growth_rate, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
         mt_model.set_task_id(i)
         mt_model.cuda()
 
