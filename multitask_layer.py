@@ -4,6 +4,49 @@ import torch.nn.functional as F
 from collections import OrderedDict
 import math
 
+class SharedConvList(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, groups):
+        super(SharedConvList, self).__init__()
+        self.task_id = 0
+        self.conv_s = nn.ModuleList()
+        self.conv_s.append(nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias=False))
+
+    def set_task_id(self, task_id):
+        self.task_id = task_id
+
+    def get_task_parameters(self, task_id):
+        parameter = []
+        if len(self.conv_s) > 1:
+            parameter.extend(self.conv_s[task_id].parameters())
+        else:
+            parameter.extend(self.conv_s[0].parameters())
+
+        return parameter
+
+    def train(self, mode=True):
+        for c in self.conv_s:
+            c.eval()
+
+        if len(self.conv_s) > 1:
+            self.conv_s[self.task_id].train()
+        else:
+            self.conv_s[0].train()
+
+    def add_task(self, copy_from, growth_rate):
+        if growth_rate > 0.0:
+            basis_channels = self.conv_s[0].out_channels
+            sfn = math.ceil(basis_channels*growth_rate)
+            sc = nn.Conv2d(self.conv_s[0].in_channels, sfn, self.conv_s[0].kernel_size, self.conv_s[0].stride, self.conv_s[0].padding, self.conv_s[0].dilation, self.conv_s[0].groups, bias=False)
+
+            # torch.nn.init.kaiming_uniform_(sc, a=math.sqrt(5))
+
+            self.conv_s.append(sc)
+
+    def forward(self, x):
+        out = torch.cat([self.conv_s[i](x) for i in range(self.task_id+1)], dim=1)
+
+        return out
+
 class TaskConv2d(nn.Module):
     def __init__(self, add_bn_prev, add_bn_next, in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, groups=1):
         super(TaskConv2d, self).__init__()
@@ -34,69 +77,19 @@ class TaskConv2d(nn.Module):
             x = self.bn_next(x)
         return x
 
-class MultitaskConv2d(nn.Conv2d):
+class MultitaskConv2d(nn.Module):
     def __init__(self, add_bn_prev, add_bn_next, in_channels, basis_channels, out_channels, kernel_size, stride, padding, dilation, groups):
-        super(MultitaskConv2d, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation, groups)
+        super(MultitaskConv2d, self).__init__()
 
         self.task_id = 0
-        # define new convolution layers with F and w
-        # self.conv_shared = nn.Conv2d(in_channels, basis_channels, kernel_size, stride, padding, dilation, groups, bias=False)
-        self.shared_weights = nn.ParameterList([nn.Parameter(torch.Tensor(basis_channels, in_channels, *kernel_size))])
+        # self.shared_weights = nn.ParameterList([nn.Parameter(torch.Tensor(basis_channels, in_channels, *kernel_size))])
+        self.conv_shared = SharedConvList(in_channels, basis_channels, kernel_size, stride, padding, dilation, groups)
         tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next, in_channels=basis_channels, out_channels=out_channels)
 
         self.conv_task = nn.ModuleList()
         self.conv_task.append(tc)
 
-    def init_weights_from_conv2d(self, conv2d, sparse_filters=False):
-        weight = conv2d.weight.data.clone()
-        bias = conv2d.bias.data.clone() if conv2d.bias is not None else None
-        assert self.shared_weights[0].shape[0] <= weight.numel() // weight.size(0), "Number of filters should be less than or match input tensor dimensions"
-        # apply SVD to get F and w
-        F, w = self.svd_init(weight, sparse_filters)
-
-        # Set the weights of the new convolution layers.
-        self.shared_weights[0].data = F.view(self.shared_weights[0].shape[0], *weight.shape[1:] ).to(weight.dtype)
-        self.conv_task[0].conv_t.weight.data = w.unsqueeze(-1).unsqueeze(-1).to(weight.dtype)
-
-        if bias is not None:
-            self.conv_task[0].conv_t.bias.data = bias.to(bias.dtype)
-        else:
-            self.conv_task[0].conv_t.bias.data.zero_()
-
-    def set_task_id(self, task_id):
-        self.task_id = task_id
-        for w in self.shared_weights:
-            w.requires_grad = False
-
-        self.shared_weights[self.task_id].requires_grad = True
-
-    def train(self, mode=True):
-        super().train()
-        for w in self.shared_weights:
-            w.requires_grad = False
-
-        self.shared_weights[self.task_id].requires_grad = True
-
-    def add_task(self, copy_from, growth_rate, add_bn_prev, add_bn_next):
-        assert growth_rate >= 0.0 and growth_rate <= 1.0, 'Growth rate must lie in [0-1]'
-
-        basis_channels = self.shared_weights[0].shape[0]
-        sfn = math.ceil(basis_channels*growth_rate)
-        sc = nn.Parameter(torch.Tensor(sfn, self.in_channels, *self.kernel_size))
-        torch.nn.init.kaiming_uniform_(sc, a=math.sqrt(5))
-
-        sc.requires_grad = False
-        self.shared_weights.append(sc)
-
-        task_in_ch = [w.shape[0] for w in self.shared_weights]
-
-        tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
-                        in_channels=sum(task_in_ch), out_channels=self.conv_task[0].conv_t.out_channels)
-
-        # tc.load_state_dict(self.conv_task[copy_from].state_dict(), strict=False)
-        self.conv_task.append(tc)
-
-    def svd_init(self, weight, sparse_filters):
+    def svd_init(self, weight, basis_channels, sparse_filters):
 
         H = weight.view(weight.shape[0], -1)
 
@@ -113,20 +106,56 @@ class MultitaskConv2d(nn.Conv2d):
             v_t = v_t[:, ind]
 
 
-        F = v_t[:, 0:self.shared_weights[0].shape[0]].t()
+        F = v_t[:, 0:basis_channels].t()
         w = torch.mm(F, H.t()).t()
 
         return F, w
 
+    def init_weights_from_conv2d(self, conv2d, sparse_filters=False):
+        weight = conv2d.weight.data.clone()
+        bias = conv2d.bias.data.clone() if conv2d.bias is not None else None
+        basis_channels = self.conv_shared.conv_s[0].out_channels
+
+        assert basis_channels <= weight.numel() // weight.size(0), "Number of basis filters should be less than or match input tensor dimensions"
+        # apply SVD to get F and w
+        F, w = self.svd_init(weight, basis_channels, sparse_filters)
+
+        # Set the weights of the new convolution layers.
+        self.conv_shared.conv_s[0].weight.data = F.view(basis_channels, *weight.shape[1:] ).to(weight.dtype)
+        self.conv_task[0].conv_t.weight.data = w.unsqueeze(-1).unsqueeze(-1).to(weight.dtype)
+
+        if bias is not None:
+            self.conv_task[0].conv_t.bias.data = bias.to(bias.dtype)
+        else:
+            self.conv_task[0].conv_t.bias.data.zero_()
+
+    def set_task_id(self, task_id):
+        self.task_id = task_id
+        self.conv_shared.set_task_id(task_id)
+
+    def get_task_parameters(self, task_id):
+        parameter = []
+        parameter.extend(self.conv_shared.get_task_parameters(task_id))
+        parameter.extend(self.conv_task[task_id].parameters())
+
+        return parameter
+
+    def add_task(self, copy_from, growth_rate, add_bn_prev, add_bn_next):
+        assert growth_rate >= 0.0 and growth_rate <= 1.0, 'Growth rate must be in the range [0-1]'
+
+        self.conv_shared.add_task(copy_from, growth_rate)
+
+        task_in_ch = [w.weight.shape[0] for w in self.conv_shared.conv_s]
+        tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
+                        in_channels=sum(task_in_ch), out_channels=self.conv_task[0].conv_t.out_channels)
+
+        assert growth_rate == 0 or copy_from is None, 'copy_from must be set to None for growth_rate > 0'
+        if copy_from is not None:
+            tc.load_state_dict(self.conv_task[copy_from].state_dict(), strict=True)
+        self.conv_task.append(tc)
+
     def forward(self, x):
-        # convolve with F and then w
-
-        # x_ = [F.conv2d(x, self.shared_weights[i], None, self.stride, self.padding, self.dilation, self.groups) for i in range(self.task_id+1)]
-        # x = torch.cat(x_, dim=1)
-
-        weights = torch.cat([self.shared_weights[i] for i in range(self.task_id+1)], dim=0)
-        x = F.conv2d(x, weights, None, self.stride, self.padding, self.dilation, self.groups)
-
+        x = self.conv_shared(x)
         x = self.conv_task[self.task_id](x)
         return x
 
@@ -140,30 +169,55 @@ if __name__ == '__main__':
 
     # create a BasisConv2d module using the weights of the Conv2d layer
     basis_conv = MultitaskConv2d(
-        False,
-        True,
-        conv.in_channels,
-        16,
-        conv.out_channels,
-        conv.kernel_size,
-        conv.stride,
-        conv.padding,
-        conv.dilation,
-        conv.groups,
-    )
+        add_bn_prev=False,
+        add_bn_next=True,
+        in_channels=conv.in_channels,
+        basis_channels=16,
+        out_channels=conv.out_channels,
+        kernel_size=conv.kernel_size,
+        stride=conv.stride,
+        padding=conv.padding,
+        dilation=conv.dilation,
+        groups=conv.groups)
     basis_conv.init_weights_from_conv2d(conv)
-    basis_conv.eval()
 
-    # perform forward pass with both Conv2d and BasisConv2d modules
     y_conv = conv(x)
+
+    # test task 0
+    print(basis_conv.conv_shared.conv_s[0].weight.sum())
+    basis_conv.eval()
+    basis_conv.set_task_id(0)
     y_basis = basis_conv(x)
     print(torch.allclose(y_conv, y_basis, atol=1e-5))  # True
-    optimizer = optim.SGD()
 
-    basis_conv.add_task(copy_from=0, growth_rate=0.5, add_bn_prev=False, add_bn_next=True)
+    # test task 0
+    basis_conv.add_task(copy_from=None, growth_rate=0.1, add_bn_prev=False, add_bn_next=True)
+    print(basis_conv.conv_shared.conv_s[0].weight.sum())
+    print(basis_conv.conv_shared.conv_s[1].weight.sum())
+    basis_conv.eval()
+    basis_conv.set_task_id(1)
+    y_basis = basis_conv(x)
+    print(torch.allclose(y_conv, y_basis, atol=1e-5))  # True
+
+    import torch.optim as optim
+    optimizer = optim.SGD(basis_conv.get_task_parameters(1), lr=0.1)
+
+    basis_conv.train()
+
+    # for name, parameter in basis_conv.named_parameters():
+    #     print(f'{name} is {parameter.requires_grad}')
+    #
+    # for name, module in basis_conv.named_modules():
+    #     print(f'{name} is {module.training}')
+
     basis_conv.set_task_id(1)
     y_basis = basis_conv(x)
 
     loss = (y_conv - y_basis).abs().sum()
     print(loss)
     loss.backward()
+
+    optimizer.step()
+
+    print(basis_conv.conv_shared.conv_s[0].weight.sum())
+    print(basis_conv.conv_shared.conv_s[1].weight.sum())
