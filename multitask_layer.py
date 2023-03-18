@@ -15,11 +15,14 @@ class SharedConvList(nn.Module):
         self.task_id = task_id
 
     def get_task_parameters(self, task_id):
+        growth = len(self.conv_s) > 1
         parameter = []
-        if len(self.conv_s) > 1:
+        if len(self.conv_s) == 1 and self.task_id == 0: # Growth is 0 and task id is 0
+            parameter.extend(self.conv_s[0].parameters())
+        elif len(self.conv_s) > 1: # Growth is > 0
             parameter.extend(self.conv_s[task_id].parameters())
         else:
-            parameter.extend(self.conv_s[0].parameters())
+            pass
 
         return parameter
 
@@ -27,10 +30,12 @@ class SharedConvList(nn.Module):
         for c in self.conv_s:
             c.eval()
 
-        if len(self.conv_s) > 1:
-            self.conv_s[self.task_id].train()
+        if len(self.conv_s) == 1 and self.task_id == 0: # Growth is 0 and task id is 0
+            self.conv_s[0].train(mode)
+        elif len(self.conv_s) > 1: # Growth is > 0
+            self.conv_s[self.task_id].train(mode)
         else:
-            self.conv_s[0].train()
+            pass
 
     def add_task(self, copy_from, growth_rate):
         if growth_rate > 0.0:
@@ -38,12 +43,19 @@ class SharedConvList(nn.Module):
             sfn = math.ceil(basis_channels*growth_rate)
             sc = nn.Conv2d(self.conv_s[0].in_channels, sfn, self.conv_s[0].kernel_size, self.conv_s[0].stride, self.conv_s[0].padding, self.conv_s[0].dilation, self.conv_s[0].groups, bias=False)
 
-            # torch.nn.init.kaiming_uniform_(sc, a=math.sqrt(5))
+            if copy_from == 0:
+                sc.weight.data.copy_(self.conv_s[0].weight.data[0:sfn, :, :, :])
+            else:
+                sc.weight.data.copy_(self.conv_s[copy_from].weight.data)
+            # torch.nn.init.kaiming_uniform_(sc.weight, a=math.sqrt(5))
 
             self.conv_s.append(sc)
 
     def forward(self, x):
-        out = torch.cat([self.conv_s[i](x) for i in range(self.task_id+1)], dim=1)
+        if len(self.conv_s) == 1:
+            out = self.conv_s[0](x)
+        else:
+            out = torch.cat([self.conv_s[i](x) for i in range(self.task_id+1)], dim=1)
 
         return out
 
@@ -149,9 +161,14 @@ class MultitaskConv2d(nn.Module):
         tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
                         in_channels=sum(task_in_ch), out_channels=self.conv_task[0].conv_t.out_channels)
 
-        assert growth_rate == 0 or copy_from is None, 'copy_from must be set to None for growth_rate > 0'
-        if copy_from is not None:
+        if growth_rate == 0:
             tc.load_state_dict(self.conv_task[copy_from].state_dict(), strict=True)
+        else:
+            prev_basis_channels = self.conv_task[copy_from].conv_t.weight.shape[1]
+            tc.conv_t.weight.data[:,0:prev_basis_channels,:,:].copy_(self.conv_task[copy_from].conv_t.weight.data)
+            # torch.nn.init.kaiming_uniform_(tc.conv_t.weight, a=math.sqrt(5))
+            # print(f'task layer weights cannot be coppied from task {copy_from} since growth_rate, {growth_rate} is > 0')
+
         self.conv_task.append(tc)
 
     def forward(self, x):

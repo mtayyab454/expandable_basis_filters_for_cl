@@ -209,6 +209,18 @@ class MultiTaskModel(nn.Module):
             if isinstance(module, MultitaskConv2d):
                 module.set_task_id(id)
 
+    def get_task_parameters(self, task_id):
+        parameter = []
+
+        for name, module in self.named_modules():
+            if isinstance(module, MultitaskConv2d):
+                parameter.extend(module.get_task_parameters(task_id))
+
+        # parameter.extend([p.data for p in self.classifiers[task_id].parameters()])
+        parameter.extend(self.classifiers[task_id].parameters())
+
+        return parameter
+
     def add_task(self, copy_from, growth_rate, add_bn_prev_list, add_bn_next_list, num_classes):
 
         ln = nn.Linear(self.classifiers[0].weight.shape[1], num_classes)

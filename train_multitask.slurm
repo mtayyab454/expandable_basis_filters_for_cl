@@ -56,7 +56,7 @@ time python train_multitask.py --jobid $SLURM_JOB_ID \
 --epochs 250 \
 --schedule 100 150 200 \
 --compression 1.0 \
---growth-rate 0.0 \
+--growth-rate 0.5 \
 --workers 4 \
 --train-batch 64 \
 --ft-lr 0.1 \
