@@ -5,9 +5,10 @@ import random
 import argparse
 import torch.nn.parallel
 import torch.optim as optim
+import torch.nn as nn
 
 from utils import Logger, create_dir, backup_code
-from cifar.trainer import testing_loop, training_loop_multitask, inference
+from cifar.trainer import test, training_loop_multitask, inference
 
 import cifar.models as models
 from multitask_model import trace_model, get_basis_channels_from_t, display_stats
@@ -36,8 +37,8 @@ parser.add_argument('--compression', default=1.0, type=float)
 parser.add_argument('--growth-rate', default=0.1, type=float)
 
 parser.add_argument('--resume', type=str2bool, nargs='?', default=False)
-parser.add_argument('--starting-tid', type=str, default='0', help='<tid> or <tid_ft>')
-parser.add_argument('--pretrained-cp', type=str, default='')
+parser.add_argument('--starting-tid', type=str, default='0_ft', help='<tid> or <tid_ft>')
+parser.add_argument('--pretrained-cps', type=str, default='./checkpoint/226429_resnet18/model0_best.pth,')
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
@@ -114,11 +115,31 @@ def get_data_loaders(args):
 
 def empty_fun(x):
     pass
+
+task_order = {}
+for i in range(100):
+    task_order[str(i)] = i * 2
+    task_order[str(i) + '_ft'] = i * 2 + 1
+def exec_block(args, tid):
+
+    if task_order[args.starting_tid] <= task_order[tid]:
+        return True
+    else:
+        return False
+
+def resume(args, tid, model):
+    file = args.pretrained_cps.split(',')[task_order[tid]]
+    sd = torch.load(file)
+    model.load_state_dict(sd)
+
+    return model
+
 def main():
     print(torch.__version__)
     print(torch.version.cuda)
     print(args)
 
+    assert not (args.random_classes and args.resume), 'Cannot resume with random classes'
     assert sum(args.increments) == len(args.class_order), 'Number of classes and task split mismatch'
 
     args.checkpoint = os.path.join(args.checkpoint, args.jobid + '_' + args.arch)
@@ -128,26 +149,28 @@ def main():
 
     train_loaders, test_loaders = get_data_loaders(args)
 
-    class_incrimental_accuracy = []
-    task_prediction_accuracy = []
+    ###########################################################################
+    ####################### Train Conv Model on Task 1 ########################
+    ###########################################################################
 
     model = models.__dict__[args.arch](num_classes=args.increments[0])
     model.set_task_id = empty_fun
     model.cuda()
 
-    ###########################################################################
-    ####################### Train Conv Model on Task 1 ########################
-    ###########################################################################
+    if exec_block(args, '0'):
 
-    logger = get_logger(fname='task0', comment='Train task 0')
-    print('\n\n'+ '_'*90 +'\n')
-    print('Training task: 0')
+        logger = get_logger(fname='task0', comment='Train task 0')
+        print('\n\n' + '_' * 90 + '\n')
+        print('Training task: 0')
 
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+        optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+        model = training_loop_multitask(model=model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
+                                        test_loaders=test_loaders, logger=logger, args=args,
+                                        save_best=True)
 
-    model = training_loop_multitask(model=model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
-                                    test_loaders=test_loaders, logger=logger, args=args,
-                                    save_best=True)
+    else:
+        print('Resuming task: 0')
+        model = resume(args, '0', model)
 
     num_conv, num_linear, in_channels, out_channels, basis_channels, layer_type = trace_model(model)
     _, _, basis_channels = get_basis_channels_from_t(model, [args.compression] * num_conv)
@@ -166,22 +189,29 @@ def main():
     ##################### Finetune Conv Model on Task 1 #######################
     ###########################################################################
 
-    if args.compression < 1.0 or args.add_bn_prev: # Finetune
+    if exec_block(args, '0_ft'):
+        if args.compression < 1.0 or args.add_bn_prev: # Finetune
 
-        logger = get_logger(fname='task0_ft', comment='Finetune task 0')
-        print('\n\n###########################################\n')
-        print('Finetuning task 0')
-        [epochs, schedule, lr, weight_decay] = args.epochs, args.schedule, args.lr, args.weight_decay
-        args.epochs, args.schedule, args.lr, args.weight_decay = args.ft_epochs, args.ft_schedule, args.ft_lr, args.ft_weight_decay
+            logger = get_logger(fname='task0_ft', comment='Finetune task 0')
+            print('\n\n###########################################\n')
+            print('Finetuning task 0')
+            [epochs, schedule, lr, weight_decay] = args.epochs, args.schedule, args.lr, args.weight_decay
+            args.epochs, args.schedule, args.lr, args.weight_decay = args.ft_epochs, args.ft_schedule, args.ft_lr, args.ft_weight_decay
 
-        optimizer = optim.SGD(mt_model.get_task_parameters(0), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+            optimizer = optim.SGD(mt_model.get_task_parameters(0), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
-        mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
-                                        test_loaders=test_loaders, logger=logger, args=args,
-                                        save_best=True)
+            mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=0, train_loaders=train_loaders,
+                                            test_loaders=test_loaders, logger=logger, args=args,
+                                            save_best=True)
 
-        [args.epochs, args.schedule, args.lr, args.weight_decay] = epochs, schedule, lr, weight_decay
+            [args.epochs, args.schedule, args.lr, args.weight_decay] = epochs, schedule, lr, weight_decay
 
+    else:
+        print('Resuming task: 0_ft')
+        mt_model = resume(args, '0_ft', mt_model)
+
+    class_incrimental_accuracy = []
+    task_prediction_accuracy = []
     tmp, tmp1 = inference(test_loaders[:1], mt_model, args, 1)
     class_incrimental_accuracy.append(tmp)
     task_prediction_accuracy.append(tmp1)
@@ -191,19 +221,33 @@ def main():
     ###################################################################################################################
 
     for i in range(1, len(args.increments)):
-        logger = get_logger(fname='task'+str(i), comment='Train task '+str(i))
-        print('\n\n'+ '_'*90 +'\n')
-        print('Training task: ', i)
 
         # Add new task parameters to the model
         mt_model.add_task(copy_from=0, growth_rate=args.growth_rate, add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[i])
         mt_model.set_task_id(i)
         mt_model.cuda()
 
-        # Training model
-        optimizer = optim.SGD(mt_model.get_task_parameters(i), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-        mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=i, train_loaders=train_loaders, test_loaders=test_loaders, logger=logger, args=args,
-                                        save_best=True)
+        if exec_block(args, str(i)):
+            logger = get_logger(fname='task'+str(i), comment='Train task '+str(i))
+            print('\n\n'+ '_'*90 +'\n')
+            print('Training task: ', i)
+            # Training model
+            optimizer = optim.SGD(mt_model.get_task_parameters(i), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+            mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=i, train_loaders=train_loaders, test_loaders=test_loaders, logger=logger, args=args,
+                                            save_best=True)
+
+        else:
+            print(f'Resuming task: {i}')
+            mt_model = resume(args, str(i), mt_model)
+
+        print('\nKeys: ', ['time', 'acc1', 'acc5', 'ce_loss'])
+        criterion = nn.CrossEntropyLoss()
+        ts_vec = []
+        for i in range(i + 1):
+            ts = test(test_loaders[i], mt_model, args, criterion, i, ['time', 'acc1', 'acc5', 'ce_loss'])
+            ts_vec.append(ts[1])
+            print('Testing performance of task ' + str(i) + ': ', ts)
+        print('Average Task Incremental Accuracy: ', sum(ts_vec) / len(ts_vec))
 
         tmp, tmp1 = inference(test_loaders[:i+1], mt_model, args, i+1)
         class_incrimental_accuracy.append(tmp)

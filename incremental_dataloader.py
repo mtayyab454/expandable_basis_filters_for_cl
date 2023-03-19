@@ -245,12 +245,14 @@ class IncrementalDataset:
                 test_dataset.targets = test_dataset.labels
                 
                 
-            order = [i for i in range(self.args.num_class)]
+            # order = [i for i in range(self.args.num_class)]
             if random_order:
                 random.seed(seed)  
                 random.shuffle(order)
             elif self.class_order is not None:
                 order = self.class_order
+            else:
+                ValueError('Order must be specified')
                 
             for i,t in enumerate(train_dataset.targets):
                 train_dataset.targets[i] = order[t]

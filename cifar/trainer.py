@@ -194,14 +194,6 @@ def training_loop_multitask(model, optimizer, task_id, train_loaders, test_loade
             print('Testing: ', test_stats)
             print('Best Acc: ', best_acc)
 
-    print('\nKeys: ', logger.keys)
-    ts_vec = []
-    for i in range(task_id + 1):
-        ts = test(test_loaders[i], best_model, args, criterion, i, logger.keys)
-        ts_vec.append(ts[1])
-        print('Testing performance of task '+str(i)+': ', ts)
-    print('Average Task Incremental Accuracy: ', sum(ts_vec) / len(ts_vec))
-
     return best_model
 
 def debug_model(model, model_copy):
