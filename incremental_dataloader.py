@@ -51,7 +51,8 @@ class IncrementalDataset:
         batch_size=128,
         seed=1,
         increment=10,
-        validation_split=0.
+        validation_split=0.,
+        class_order=None
     ):
         self.dataset_name = dataset_name.lower().strip()
         datasets = _get_datasets(dataset_name)
@@ -62,6 +63,7 @@ class IncrementalDataset:
         except:
             self.meta_transforms = datasets[0].train_transforms
         self.args = args
+        self.class_order = class_order
         
         self._setup_data(
             datasets,
@@ -106,29 +108,29 @@ class IncrementalDataset:
             
         return all_indices, for_memory
     
-    def get_same_index_test_chunk(self, target, label, mode="test", memory=None):
-        label_indices = []
-        label_targets = []
-        
-        np_target = np.array(target, dtype="uint32")
-        np_indices = np.array(list(range(len(target))), dtype="uint32")
-
-        for t in range(len(label)//self.args.class_per_task):
-            task_idx = []
-            for class_id in label[t*self.args.class_per_task: (t+1)*self.args.class_per_task]:
-                idx = np.where(np_target==class_id)[0]
-                task_idx.extend(list(idx.ravel()))
-            task_idx = np.array(task_idx, dtype="uint32")
-            task_idx.ravel()
-            random.shuffle(task_idx)
-
-            label_indices.extend(list(np_indices[task_idx]))
-            label_targets.extend(list(np_target[task_idx]))
-            if(t not in self.sample_per_task_testing.keys()):
-                self.sample_per_task_testing[t] = len(task_idx)
-        label_indices = np.array(label_indices, dtype="uint32")
-        label_indices.ravel()
-        return list(label_indices), label_targets
+    # def get_same_index_test_chunk(self, target, label, mode="test", memory=None):
+    #     label_indices = []
+    #     label_targets = []
+    #
+    #     np_target = np.array(target, dtype="uint32")
+    #     np_indices = np.array(list(range(len(target))), dtype="uint32")
+    #
+    #     for t in range(len(label)//self.args.class_per_task):
+    #         task_idx = []
+    #         for class_id in label[t*self.args.class_per_task: (t+1)*self.args.class_per_task]:
+    #             idx = np.where(np_target==class_id)[0]
+    #             task_idx.extend(list(idx.ravel()))
+    #         task_idx = np.array(task_idx, dtype="uint32")
+    #         task_idx.ravel()
+    #         random.shuffle(task_idx)
+    #
+    #         label_indices.extend(list(np_indices[task_idx]))
+    #         label_targets.extend(list(np_target[task_idx]))
+    #         if(t not in self.sample_per_task_testing.keys()):
+    #             self.sample_per_task_testing[t] = len(task_idx)
+    #     label_indices = np.array(label_indices, dtype="uint32")
+    #     label_indices.ravel()
+    #     return list(label_indices), label_targets
     
 
     def new_task(self, memory=None):
@@ -164,48 +166,47 @@ class IncrementalDataset:
      
         
     # for verification   
-    def get_galary(self, task, batch_size=10):
-        indexes = []
-        dict_ind = {}
-        seen_classes = []
-        for i, t in enumerate(self.train_dataset.targets):
-            if not(t in seen_classes) and (t< (task+1)*self.args.class_per_task and (t>= (task)*self.args.class_per_task)):
-                seen_classes.append(t)
-                dict_ind[t] = i
-                
-        od = collections.OrderedDict(sorted(dict_ind.items()))
-        for k, v in od.items(): 
-            indexes.append(v)
-            
-        data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(indexes, False))
-    
-        return data_loader
-    
-    
-    def get_custom_loader_idx(self, indexes, mode="train", batch_size=10, shuffle=True):
-     
-        if(mode=="train"):
-            data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(indexes, True))
-        else: 
-            data_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(indexes, False))
-    
-        return data_loader
+    # def get_galary(self, task, batch_size=10):
+    #     indexes = []
+    #     dict_ind = {}
+    #     seen_classes = []
+    #     for i, t in enumerate(self.train_dataset.targets):
+    #         if not(t in seen_classes) and (t< (task+1)*self.args.class_per_task and (t>= (task)*self.args.class_per_task)):
+    #             seen_classes.append(t)
+    #             dict_ind[t] = i
+    #
+    #     od = collections.OrderedDict(sorted(dict_ind.items()))
+    #     for k, v in od.items():
+    #         indexes.append(v)
+    #
+    #     data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(indexes, False))
+    #
+    #     return data_loader
     
     
-    def get_custom_loader_class(self, class_id, mode="train", batch_size=10, shuffle=False):
-        
-        if(mode=="train"):
-            train_indices, for_memory = self.get_same_index(self.train_dataset.targets, class_id, mode="train", memory=None)
-            data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(train_indices, True))
-        else: 
-            test_indices, _ = self.get_same_index(self.test_dataset.targets, class_id, mode="test")
-            data_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(test_indices, False))
-            
-        return data_loader
+    # def get_custom_loader_idx(self, indexes, mode="train", batch_size=10, shuffle=True):
+    #
+    #     if(mode=="train"):
+    #         data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(indexes, True))
+    #     else:
+    #         data_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(indexes, False))
+    #
+    #     return data_loader
+    #
+    #
+    # def get_custom_loader_class(self, class_id, mode="train", batch_size=10, shuffle=False):
+    #
+    #     if(mode=="train"):
+    #         train_indices, for_memory = self.get_same_index(self.train_dataset.targets, class_id, mode="train", memory=None)
+    #         data_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(train_indices, True))
+    #     else:
+    #         test_indices, _ = self.get_same_index(self.test_dataset.targets, class_id, mode="test")
+    #         data_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, sampler=SubsetRandomSampler(test_indices, False))
+    #
+    #     return data_loader
 
     def _setup_data(self, datasets, path, random_order=False, seed=1, increment=10, validation_split=0.):
         self.increments = []
-        self.class_order = []
         
         trsf_train = transforms.Compose(self.train_transforms)
         try:
@@ -248,55 +249,56 @@ class IncrementalDataset:
             if random_order:
                 random.seed(seed)  
                 random.shuffle(order)
-            elif dataset.class_order is not None:
-                order = dataset.class_order
+            elif self.class_order is not None:
+                order = self.class_order
                 
             for i,t in enumerate(train_dataset.targets):
                 train_dataset.targets[i] = order[t]
             for i,t in enumerate(test_dataset.targets):
                 test_dataset.targets[i] = order[t]
             self.class_order.append(order)
+            print(f'Class order: {order}')
 
             self.increments = [increment for _ in range(len(order) // increment)]
 
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
 
-    @staticmethod
-    def _map_new_class_index(y, order):
-        """Transforms targets for new class order."""
-        return np.array(list(map(lambda x: order.index(x), y)))
-    
-    
-    def get_memory(self, memory, for_memory, seed=1):
-        random.seed(seed)
-        memory_per_task = self.args.memory // ((self.args.sess+1)*self.args.class_per_task)
-        self._data_memory, self._targets_memory = np.array([]), np.array([])
-        mu = 1
-        
-        #update old memory
-        if(memory is not None):
-            data_memory, targets_memory = memory
-            data_memory = np.array(data_memory, dtype="int32")
-            targets_memory = np.array(targets_memory, dtype="int32")
-            for class_idx in range(self.args.class_per_task*(self.args.sess)):
-                idx = np.where(targets_memory==class_idx)[0][:memory_per_task]
-                self._data_memory = np.concatenate([self._data_memory, np.tile(data_memory[idx], (mu,))   ])
-                self._targets_memory = np.concatenate([self._targets_memory, np.tile(targets_memory[idx], (mu,))    ])
-                
-                
-        #add new classes to the memory
-        new_indices, new_targets = for_memory
-
-        new_indices = np.array(new_indices, dtype="int32")
-        new_targets = np.array(new_targets, dtype="int32")
-        for class_idx in range(self.args.class_per_task*(self.args.sess),self.args.class_per_task*(1+self.args.sess)):
-            idx = np.where(new_targets==class_idx)[0][:memory_per_task]
-            self._data_memory = np.concatenate([self._data_memory, np.tile(new_indices[idx],(mu,))   ])
-            self._targets_memory = np.concatenate([self._targets_memory, np.tile(new_targets[idx],(mu,))    ])
-            
-        print(len(self._data_memory))
-        return list(self._data_memory.astype("int32")), list(self._targets_memory.astype("int32"))
+    # @staticmethod
+    # def _map_new_class_index(y, order):
+    #     """Transforms targets for new class order."""
+    #     return np.array(list(map(lambda x: order.index(x), y)))
+    #
+    #
+    # def get_memory(self, memory, for_memory, seed=1):
+    #     random.seed(seed)
+    #     memory_per_task = self.args.memory // ((self.args.sess+1)*self.args.class_per_task)
+    #     self._data_memory, self._targets_memory = np.array([]), np.array([])
+    #     mu = 1
+    #
+    #     #update old memory
+    #     if(memory is not None):
+    #         data_memory, targets_memory = memory
+    #         data_memory = np.array(data_memory, dtype="int32")
+    #         targets_memory = np.array(targets_memory, dtype="int32")
+    #         for class_idx in range(self.args.class_per_task*(self.args.sess)):
+    #             idx = np.where(targets_memory==class_idx)[0][:memory_per_task]
+    #             self._data_memory = np.concatenate([self._data_memory, np.tile(data_memory[idx], (mu,))   ])
+    #             self._targets_memory = np.concatenate([self._targets_memory, np.tile(targets_memory[idx], (mu,))    ])
+    #
+    #
+    #     #add new classes to the memory
+    #     new_indices, new_targets = for_memory
+    #
+    #     new_indices = np.array(new_indices, dtype="int32")
+    #     new_targets = np.array(new_targets, dtype="int32")
+    #     for class_idx in range(self.args.class_per_task*(self.args.sess),self.args.class_per_task*(1+self.args.sess)):
+    #         idx = np.where(new_targets==class_idx)[0][:memory_per_task]
+    #         self._data_memory = np.concatenate([self._data_memory, np.tile(new_indices[idx],(mu,))   ])
+    #         self._targets_memory = np.concatenate([self._targets_memory, np.tile(new_targets[idx],(mu,))    ])
+    #
+    #     print(len(self._data_memory))
+    #     return list(self._data_memory.astype("int32")), list(self._targets_memory.astype("int32"))
     
 def _get_datasets(dataset_names):
     return [_get_dataset(dataset_name) for dataset_name in dataset_names.split("-")]
@@ -421,12 +423,12 @@ class iCIFAR100(DataHandler):
     #     transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
     # ]
 
-    class_order = [
-        68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50,
-        28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96,
-        98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69,
-        36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33
-    ]
+    # class_order = [
+    #     68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50,
+    #     28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96,
+    #     98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69,
+    #     36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33
+    # ]
     
 
     

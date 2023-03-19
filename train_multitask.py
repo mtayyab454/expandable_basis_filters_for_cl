@@ -26,43 +26,47 @@ parser = argparse.ArgumentParser(description='Compressed Continual Learning')
 # Datasets
 
 parser.add_argument('--jobid', type=str, default='test')
+
 parser.add_argument('--arch', default='resnet18')
+parser.add_argument('--increments', type=int, nargs='+', default=[10]*10)
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
 parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
 
-parser.add_argument('-d', '--dataset', default='cifar100', type=str)
-parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
-parser.add_argument('--increments', type=int, nargs='+', default=[10]*10)
-parser.add_argument('--validation', default=0, type=int)
-
-parser.add_argument('--random-classes', type=str2bool, nargs='?', const=True, default=False)
-parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=False)
-
-# parser.add_argument('--starting-tid', type=int, default=0)
-# # checkpoint/132937_resnet32_multitask/model0_best.pth
-# parser.add_argument('--pretrained-cp', type=str, default='')
-parser.add_argument('-j', '--workers', default=0, type=int)
 parser.add_argument('--compression', default=1.0, type=float)
 parser.add_argument('--growth-rate', default=0.1, type=float)
-# Task1 options
-parser.add_argument('--display-gap', default=3, type=int)
-parser.add_argument('--resume-from', default='./checkpoint/random_init_test_resnet18/model_rand_init.pth', type=str)
+
+parser.add_argument('--resume', type=str2bool, nargs='?', default=False)
+parser.add_argument('--starting-tid', type=str, default='0', help='<tid> or <tid_ft>')
+parser.add_argument('--pretrained-cp', type=str, default='')
+
+parser.add_argument('-d', '--dataset', default='cifar100', type=str)
+parser.add_argument('--data-path', default='../../data/CIFAR', type=str)
+parser.add_argument('-j', '--workers', default=0, type=int)
+parser.add_argument('--train-batch', default=64, type=int)
+parser.add_argument('--test-batch', default=100, type=int)
+
+parser.add_argument('--validation', default=0, type=int)
+parser.add_argument('--random-classes', type=str2bool, nargs='?', const=True, default=False)
+parser.add_argument('--overflow', type=str2bool, nargs='?', const=True, default=False)
+parser.add_argument('--class-order', type=int, nargs='+', default=[68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92,
+        55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50, 28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72,
+        60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96, 98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88,
+        27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69, 36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33])
 
 parser.add_argument('--epochs', default=1, type=int)
 parser.add_argument('--schedule', type=int, nargs='+', default=[100, 150, 200], help='Decrease learning rate at these epochs.')
 parser.add_argument('--lr', default=0.1, type=float)
+parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
+parser.add_argument('--momentum', default=0.9, type=float)
+parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float)
 
 parser.add_argument('--ft-epochs', default=1, type=int)
 parser.add_argument('--ft-schedule', type=int, nargs='+', default=[100, 150, 200])
 parser.add_argument('--ft-lr', default=0.01, type=float)
 parser.add_argument('--ft-weight-decay', default=5e-4, type=float)
 
-parser.add_argument('--train-batch', default=64, type=int)
-parser.add_argument('--test-batch', default=100, type=int)
-parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
-parser.add_argument('--momentum', default=0.9, type=float)
-parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float)
 # Checkpoints
+parser.add_argument('--display-gap', default=3, type=int)
 parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH', help='path to save checkpoint (default: checkpoint)')
 parser.add_argument('--logs', default='logs', type=str, metavar='PATH', help='path to save the training logs (default: logs)')
 parser.add_argument('--manual-seed', type=int, default=None, help='manual seed')
@@ -96,6 +100,7 @@ def get_data_loaders(args):
         workers=args.workers,
         validation_split=args.validation,
         increment=args.increments[0],
+        class_order = args.class_order
     )
     task_data = []
     for i in range(len(args.increments)):
@@ -113,6 +118,8 @@ def main():
     print(torch.__version__)
     print(torch.version.cuda)
     print(args)
+
+    assert sum(args.increments) == len(args.class_order), 'Number of classes and task split mismatch'
 
     args.checkpoint = os.path.join(args.checkpoint, args.jobid + '_' + args.arch)
     # backup_code(os.path.join('logs', args.jobid + '_' + args.arch, 'backup'), ['train_multitask.py', 'trainer.py', 'train_multitask.slurm'])
