@@ -243,25 +243,25 @@ class IncrementalDataset:
                 test_dataset = dataset.base_dataset(root=path, split='test', download=True, transform=trsf_test)
                 train_dataset.targets = train_dataset.labels
                 test_dataset.targets = test_dataset.labels
-                
-                
-            # order = [i for i in range(self.args.num_class)]
+
             if random_order:
                 random.seed(seed)  
                 random.shuffle(order)
+                self.class_order = order
             elif self.class_order is not None:
-                order = self.class_order
+                pass
             else:
-                ValueError('Order must be specified')
+                order = [i for i in range(self.args.num_class)]
+                self.class_order = order
                 
             for i,t in enumerate(train_dataset.targets):
-                train_dataset.targets[i] = order[t]
+                train_dataset.targets[i] = self.class_order[t]
             for i,t in enumerate(test_dataset.targets):
-                test_dataset.targets[i] = order[t]
-            self.class_order.append(order)
-            print(f'Class order: {order}')
+                test_dataset.targets[i] = self.class_order[t]
+            # self.class_order.append(order)
+            print(f'Class order: {self.class_order}')
 
-            self.increments = [increment for _ in range(len(order) // increment)]
+            self.increments = [increment for _ in range(len(self.class_order) // increment)]
 
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset

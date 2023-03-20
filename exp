@@ -1,0 +1,8 @@
+227107: No compression, growth rate = 0
+227108: No compression, growth rate = 0.5
+227113: No compression, growth rate = 0.1
+227114: No compression, growth rate = 0.5, new task and shared filters are randomly initilized
+227115: No compression, growth rate = 0.5, new task and shared filters are copied from task 0
+227126: No compression, growth rate = 0.1, new task and shared filters are copied from task 0
+227127: No compression, growth rate = 0.1, new task and shared filters are copied from task 0, all weights trained
+227128: No compression, growth rate = 0.5, new task and shared filters are copied from task 0, all weights trained

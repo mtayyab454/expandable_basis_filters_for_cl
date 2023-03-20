@@ -33,12 +33,12 @@ parser.add_argument('--increments', type=int, nargs='+', default=[10]*10)
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
 parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
 
-parser.add_argument('--compression', default=1.0, type=float)
+parser.add_argument('--compression', default=0.95, type=float)
 parser.add_argument('--growth-rate', default=0.1, type=float)
 
 parser.add_argument('--resume', type=str2bool, nargs='?', default=False)
-parser.add_argument('--starting-tid', type=str, default='0_ft', help='<tid> or <tid_ft>')
-parser.add_argument('--pretrained-cps', type=str, default='./checkpoint/226429_resnet18/model0_best.pth,')
+parser.add_argument('--starting-tid', type=str, default='1', help='<tid> or <tid_ft>')
+parser.add_argument('--pretrained-cps', type=str, default='./checkpoint/226429_resnet18/model0_best.pth,./checkpoint/227651_resnet18/model_0_ft_best.pth')
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
 parser.add_argument('--data-path', default='../../data/CIFAR', type=str)

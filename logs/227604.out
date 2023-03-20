@@ -1,0 +1,579 @@
+Sat Mar 18 18:17:48 EDT 2023
+Slurm nodes: evc5
+You were assigned 1 gpu(s)
+Please run `conda env list` to see a list of all available environments. Use
+`source activate <env>` to activate the environment '<env>'. 
+
+Currently Loaded Modules:
+  1) anaconda/anaconda3
+
+ 
+
+	[4mGPU0	mlx5_0	CPU Affinity	NUMA Affinity[0m
+GPU0	 X 	SYS	0,2	0
+mlx5_0	SYS	 X 		
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+
+1.13.1+cu116
+11.6
+Namespace(add_bn_next=True, add_bn_prev=False, arch='resnet18', checkpoint='checkpoint', compression=1.0, data_path='../../data/CIFAR', dataset='cifar100', display_gap=50, epochs=250, ft_epochs=250, ft_lr=0.1, ft_schedule=[100, 150, 200], ft_weight_decay=0.0005, gamma=0.1, growth_rate=0.5, increments=[10, 10, 10, 10, 10, 10, 10, 10, 10, 10], jobid='227604', logs='logs', lr=0.1, manual_seed=7137, momentum=0.9, overflow=False, random_classes=False, resume_from='./checkpoint/random_init_test_resnet18/model_rand_init.pth', schedule=[100, 150, 200], test_batch=100, train_batch=64, validation=0, weight_decay=0.0005, workers=4)
+Files already downloaded and verified
+Files already downloaded and verified
+0
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+1
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+2
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+3
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+4
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+5
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+6
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+7
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+8
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+9
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+
+
+__________________________________________________________________________________________
+
+Training task: 0
+
+Task ID: [0] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.12477075299130211, 12.895569620253164, 58.03006329113924, 3.2319270930712736]
+Testing:  [0.07253003120422363, 16.7, 67.2, 2.339477467536926]
+Best Acc:  16.7
+
+Task ID: [0] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020105829721764674, 84.53322784810126, 99.32753164556962, 0.47260696544677394]
+Testing:  [0.0801656723022461, 77.2, 97.4, 0.8376575112342834]
+Best Acc:  77.5
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [0] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022313999224312698, 96.08386075949367, 99.94066455696202, 0.12673361917745463]
+Testing:  [0.08043692111968995, 86.0, 99.2, 0.4835315138101578]
+Best Acc:  86.0
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [0] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020130121255222753, 99.78243670886076, 100.0, 0.009267138187549536]
+Testing:  [0.0931441068649292, 88.2, 99.3, 0.43771046996116636]
+Best Acc:  89.2
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [0] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023989641213718847, 99.98022151898734, 100.0, 0.0061872415229843195]
+Testing:  [0.07680318355560303, 87.9, 99.2, 0.4243054032325745]
+Best Acc:  89.3
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.06383447647094727, 89.4, 99.2, 0.42812161445617675]
+Average Task Incremental Accuracy:  89.4
+[27, 64, 64, 64, 64, 128, 128, 64, 128, 128, 256, 256, 128, 256, 256, 512, 512, 256, 512, 512]
+Running inference on model to measure class incremental accuracy ...
+Total tasks: 1, CIL Acc: 89.40, Task-id Cls. Acc.:  100.00
+
+
+__________________________________________________________________________________________
+
+Training task:  1
+
+Task ID: [1] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02231695380391954, 21.20253164556962, 68.63132911392405, 2.5006617443471013]
+Testing:  [0.0616060733795166, 29.0, 78.6, 2.027480947971344]
+Best Acc:  29.0
+
+Task ID: [1] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022713540475579757, 78.69857594936708, 99.32753164556962, 0.597696176435374]
+Testing:  [0.08338444232940674, 70.1, 98.1, 0.8945091962814331]
+Best Acc:  70.2
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [1] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02131147022488751, 92.68196202531645, 99.9011075949367, 0.2132894867394544]
+Testing:  [0.09548389911651611, 80.5, 99.1, 0.6016908794641495]
+Best Acc:  80.5
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [1] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022391521478001074, 99.26819620253164, 100.0, 0.023462760657119223]
+Testing:  [0.0753941535949707, 81.2, 98.9, 0.8235714197158813]
+Best Acc:  83.9
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [1] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022339700143548507, 99.80221518987342, 100.0, 0.009983578894310926]
+Testing:  [0.08248560428619385, 82.3, 98.3, 0.8186302900314331]
+Best Acc:  83.9
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.06587917804718017, 8.2, 51.3, 7.178755903244019]
+Testing performance of task 1:  [0.08442888259887696, 83.9, 98.9, 0.648931336402893]
+Average Task Incremental Accuracy:  46.050000000000004
+
+
+__________________________________________________________________________________________
+
+Training task:  2
+
+Task ID: [2] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02270095559615123, 17.167721518987342, 62.223101265822784, 2.9505655539186697]
+Testing:  [0.07802579402923585, 20.4, 70.2, 2.2346936225891114]
+Best Acc:  20.4
+
+Task ID: [2] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.024002778379223013, 80.8742088607595, 98.99129746835443, 0.5575562670261045]
+Testing:  [0.08850033283233642, 72.0, 97.0, 0.8980258941650391]
+Best Acc:  72.0
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [2] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.024812791920915435, 94.54113924050633, 99.9011075949367, 0.16972847933633417]
+Testing:  [0.09882383346557617, 82.2, 99.2, 0.5719681859016419]
+Best Acc:  82.2
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [2] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02302059946180899, 99.96044303797468, 100.0, 0.0092130330467856]
+Testing:  [0.08239157199859619, 84.1, 99.3, 0.5947357684373855]
+Best Acc:  85.2
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [2] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021841414367096332, 99.94066455696202, 100.0, 0.00786447473742728]
+Testing:  [0.08043825626373291, 84.8, 99.2, 0.5936533570289612]
+Best Acc:  85.4
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.08871965408325196, 8.2, 47.1, 7.465339946746826]
+Testing performance of task 1:  [0.0745363712310791, 9.0, 56.4, 8.157949686050415]
+Testing performance of task 2:  [0.07658751010894775, 85.4, 99.5, 0.5717380285263062]
+Average Task Incremental Accuracy:  34.2
+
+
+__________________________________________________________________________________________
+
+Training task:  3
+
+Task ID: [3] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02256206621097613, 14.912974683544304, 56.15110759493671, 3.308612533762485]
+Testing:  [0.07375319004058838, 16.5, 60.5, 2.571712923049927]
+Best Acc:  16.5
+
+Task ID: [3] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021802796593195277, 81.94224683544304, 99.22863924050633, 0.5261096237580988]
+Testing:  [0.09365534782409668, 50.5, 87.6, 2.352387809753418]
+Best Acc:  77.6
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [3] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021220201178442075, 94.06645569620254, 99.96044303797468, 0.17686486838361884]
+Testing:  [0.07134695053100586, 86.4, 98.9, 0.4549268364906311]
+Best Acc:  86.4
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [3] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020973069758354862, 99.58465189873418, 100.0, 0.016552827043953954]
+Testing:  [0.0864635944366455, 86.4, 98.7, 0.5536762356758118]
+Best Acc:  87.6
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [3] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.024443550954891157, 99.70332278481013, 100.0, 0.00961189893593045]
+Testing:  [0.08230562210083008, 86.5, 98.7, 0.5491215914487839]
+Best Acc:  87.6
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.08631565570831298, 7.4, 37.7, 7.1632493019104]
+Testing performance of task 1:  [0.08195037841796875, 12.0, 47.3, 6.543554258346558]
+Testing performance of task 2:  [0.0938565969467163, 8.1, 49.6, 6.660722064971924]
+Testing performance of task 3:  [0.0962109088897705, 87.6, 98.7, 0.4782823234796524]
+Average Task Incremental Accuracy:  28.775
+
+
+__________________________________________________________________________________________
+
+Training task:  4
+
+Task ID: [4] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02309825148763536, 13.765822784810126, 55.24129746835443, 3.1564321819740004]
+Testing:  [0.07210519313812255, 16.0, 62.0, 2.305269193649292]
+Best Acc:  16.0
+
+Task ID: [4] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023901830745648733, 83.93987341772151, 99.40664556962025, 0.4643099108074285]
+Testing:  [0.09403526782989502, 75.6, 97.7, 0.8299911111593247]
+Best Acc:  78.8
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [4] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022453214548811128, 95.15427215189874, 99.98022151898734, 0.15682318806648254]
+Testing:  [0.07129528522491455, 89.2, 99.1, 0.40331690311431884]
+Best Acc:  89.2
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [4] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.0200292641603494, 99.94066455696202, 100.0, 0.007370236656876116]
+Testing:  [0.07474422454833984, 89.8, 99.2, 0.42521546185016634]
+Best Acc:  90.5
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [4] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023052239719825455, 99.98022151898734, 100.0, 0.005586143362017561]
+Testing:  [0.10930113792419434, 89.8, 99.2, 0.41690234988927843]
+Best Acc:  90.5
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.06898512840270996, 6.1, 38.1, 7.491188716888428]
+Testing performance of task 1:  [0.07615611553192139, 4.0, 39.4, 6.9545330047607425]
+Testing performance of task 2:  [0.0666731357574463, 7.1, 49.4, 7.635937070846557]
+Testing performance of task 3:  [0.07219069004058838, 14.1, 56.2, 6.088579177856445]
+Testing performance of task 4:  [0.07185466289520263, 90.7, 99.3, 0.4113059163093567]
+Average Task Incremental Accuracy:  24.4
+
+
+__________________________________________________________________________________________
+
+Training task:  5
+
+Task ID: [5] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023156274723101267, 22.21123417721519, 68.63132911392405, 2.8164072187641]
+Testing:  [0.09302263259887696, 27.2, 78.3, 2.5883984565734863]
+Best Acc:  27.2
+
+Task ID: [5] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02364558509633511, 83.01028481012658, 99.74287974683544, 0.4571682622161093]
+Testing:  [0.07887816429138184, 70.3, 97.7, 0.9373113691806794]
+Best Acc:  73.4
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [5] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021860650823086122, 93.67088607594937, 99.98022151898734, 0.18985309442387352]
+Testing:  [0.08820991516113282, 80.1, 98.8, 0.6150149911642074]
+Best Acc:  80.1
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [5] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02437090571922592, 99.80221518987342, 100.0, 0.011190575890867865]
+Testing:  [0.07964389324188233, 82.4, 98.9, 0.8007581114768982]
+Best Acc:  83.3
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [5] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021827423119846777, 99.96044303797468, 100.0, 0.006282690635446129]
+Testing:  [0.08186898231506348, 82.9, 98.8, 0.7958839654922485]
+Best Acc:  83.4
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.09713916778564453, 6.7, 47.0, 7.316819572448731]
+Testing performance of task 1:  [0.07919883728027344, 7.3, 48.6, 7.367875385284424]
+Testing performance of task 2:  [0.06507341861724854, 9.8, 45.2, 7.691567468643188]
+Testing performance of task 3:  [0.0628695011138916, 13.7, 64.6, 5.820317220687866]
+Testing performance of task 4:  [0.07845196723937989, 10.5, 54.9, 6.854379796981812]
+Testing performance of task 5:  [0.07070765495300294, 83.5, 98.7, 0.7800552725791932]
+Average Task Incremental Accuracy:  21.916666666666668
+
+
+__________________________________________________________________________________________
+
+Training task:  6
+
+Task ID: [6] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021206357811070695, 25.019778481012658, 76.3251582278481, 2.5141685823850994]
+Testing:  [0.08124401569366455, 30.0, 84.3, 2.0287384152412415]
+Best Acc:  30.0
+
+Task ID: [6] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023082802567300918, 85.66060126582279, 99.64398734177215, 0.41525939069216766]
+Testing:  [0.0951275110244751, 79.6, 99.4, 0.6545336872339249]
+Best Acc:  82.8
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [6] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022813815104810498, 96.93433544303798, 100.0, 0.09419407895943031]
+Testing:  [0.08656260967254639, 91.0, 99.5, 0.29220577627420424]
+Best Acc:  91.0
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [6] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02448683448984653, 99.82199367088607, 100.0, 0.008599617770472188]
+Testing:  [0.08092041015625, 92.1, 99.6, 0.29918963462114334]
+Best Acc:  92.8
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [6] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023452435867695867, 99.82199367088607, 100.0, 0.007150129507195581]
+Testing:  [0.10007059574127197, 92.6, 99.8, 0.29127143025398256]
+Best Acc:  92.8
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.08947896957397461, 7.8, 45.9, 7.049592018127441]
+Testing performance of task 1:  [0.07006978988647461, 7.0, 52.4, 8.368784332275391]
+Testing performance of task 2:  [0.081290602684021, 13.2, 55.1, 6.5210280418396]
+Testing performance of task 3:  [0.0773240089416504, 12.6, 58.2, 6.448300695419311]
+Testing performance of task 4:  [0.07889432907104492, 7.6, 49.2, 6.755067825317383]
+Testing performance of task 5:  [0.10794873237609863, 8.8, 50.8, 6.481410312652588]
+Testing performance of task 6:  [0.08604769706726074, 92.8, 99.5, 0.2821728527545929]
+Average Task Incremental Accuracy:  21.400000000000002
+
+
+__________________________________________________________________________________________
+
+Training task:  7
+
+Task ID: [7] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022202796573880353, 23.65506329113924, 70.2136075949367, 2.607765507094468]
+Testing:  [0.0858351707458496, 27.3, 78.2, 2.2023436546325685]
+Best Acc:  27.3
+
+Task ID: [7] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02328490305550491, 84.92879746835443, 99.3868670886076, 0.4448297695268559]
+Testing:  [0.08363614082336426, 77.3, 97.4, 0.8122694581747055]
+Best Acc:  77.3
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [7] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020362980758087543, 94.89715189873418, 99.96044303797468, 0.16131743760425835]
+Testing:  [0.08509032726287842, 86.6, 98.5, 0.4946703314781189]
+Best Acc:  86.6
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [7] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02306818962097168, 99.94066455696202, 100.0, 0.008562311807152214]
+Testing:  [0.08069758415222168, 88.7, 99.0, 0.495992848277092]
+Best Acc:  88.9
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [7] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.023886638351633578, 99.98022151898734, 100.0, 0.0058255137188973115]
+Testing:  [0.09655003547668457, 89.0, 99.3, 0.4867416799068451]
+Best Acc:  89.3
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.0820913553237915, 12.8, 50.5, 6.286327314376831]
+Testing performance of task 1:  [0.08079285621643066, 9.1, 50.8, 6.670197534561157]
+Testing performance of task 2:  [0.08295342922210694, 8.0, 47.8, 7.060636520385742]
+Testing performance of task 3:  [0.08489325046539306, 11.2, 50.4, 7.2625213146209715]
+Testing performance of task 4:  [0.0685044527053833, 8.5, 51.2, 6.681410932540894]
+Testing performance of task 5:  [0.10067172050476074, 7.3, 48.4, 7.191485214233398]
+Testing performance of task 6:  [0.09044241905212402, 13.6, 56.9, 6.385252904891968]
+Testing performance of task 7:  [0.08356833457946777, 89.3, 99.3, 0.47955757677555083]
+Average Task Incremental Accuracy:  19.974999999999998
+
+
+__________________________________________________________________________________________
+
+Training task:  8
+
+Task ID: [8] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.019959389408932455, 25.474683544303797, 74.42642405063292, 2.496850268750251]
+Testing:  [0.07878265380859376, 31.5, 85.8, 1.9565600156784058]
+Best Acc:  31.5
+
+Task ID: [8] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02338285687603528, 90.90189873417721, 99.86155063291139, 0.26933423674936535]
+Testing:  [0.07723190784454345, 83.4, 98.4, 0.557260024547577]
+Best Acc:  83.8
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [8] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.019724833814403677, 97.1123417721519, 100.0, 0.10580484559641609]
+Testing:  [0.08228182792663574, 90.4, 99.1, 0.3138064742088318]
+Best Acc:  90.4
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [8] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021769807308535033, 99.98022151898734, 100.0, 0.005555520601912484]
+Testing:  [0.09168541431427002, 92.5, 99.5, 0.277207687497139]
+Best Acc:  92.6
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [8] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.025245735916910293, 99.84177215189874, 100.0, 0.006355323233417695]
+Testing:  [0.08246371746063233, 92.0, 99.3, 0.26701881662011145]
+Best Acc:  92.7
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.08582236766815185, 7.8, 45.6, 7.112152814865112]
+Testing performance of task 1:  [0.08767039775848388, 4.0, 40.8, 8.040832328796387]
+Testing performance of task 2:  [0.0998218297958374, 3.8, 27.7, 8.765228366851806]
+Testing performance of task 3:  [0.07344424724578857, 8.3, 50.9, 6.768641996383667]
+Testing performance of task 4:  [0.06545112133026124, 14.2, 52.2, 6.17041425704956]
+Testing performance of task 5:  [0.07481391429901123, 16.2, 56.8, 6.2391942024230955]
+Testing performance of task 6:  [0.06611552238464355, 20.0, 60.6, 5.636437845230103]
+Testing performance of task 7:  [0.0927417516708374, 8.9, 49.1, 7.396344089508057]
+Testing performance of task 8:  [0.0815969467163086, 93.0, 99.7, 0.2665928412228823]
+Average Task Incremental Accuracy:  19.577777777777776
+
+
+__________________________________________________________________________________________
+
+Training task:  9
+
+Task ID: [9] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021563007861753053, 17.30617088607595, 59.829905063291136, 3.1156237155576294]
+Testing:  [0.0765300989151001, 26.4, 71.1, 2.077741062641144]
+Best Acc:  26.4
+
+Task ID: [9] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020999564400202113, 81.07199367088607, 99.10996835443038, 0.5557135713251331]
+Testing:  [0.08931994438171387, 72.5, 97.4, 0.8449869275093078]
+Best Acc:  73.6
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [9] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02355833295025403, 95.9256329113924, 99.98022151898734, 0.1319831363573859]
+Testing:  [0.08199419975280761, 84.5, 99.4, 0.5379525035619735]
+Best Acc:  84.5
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [9] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.022584444359888003, 99.96044303797468, 100.0, 0.00986661365302869]
+Testing:  [0.08441441059112549, 86.4, 98.8, 0.5351322084665299]
+Best Acc:  86.8
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [9] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.021127915080589584, 99.94066455696202, 100.0, 0.006543014385690323]
+Testing:  [0.08178801536560058, 86.6, 98.9, 0.5289604425430298]
+Best Acc:  87.1
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.08932230472564698, 10.4, 43.3, 7.342430210113525]
+Testing performance of task 1:  [0.08775479793548584, 11.5, 47.0, 7.966487979888916]
+Testing performance of task 2:  [0.07716829776763916, 8.3, 58.3, 7.464338207244873]
+Testing performance of task 3:  [0.07861611843109131, 11.4, 61.2, 6.378994512557983]
+Testing performance of task 4:  [0.06930930614471435, 10.2, 59.7, 6.506347417831421]
+Testing performance of task 5:  [0.07191791534423828, 10.4, 51.2, 6.824083042144776]
+Testing performance of task 6:  [0.07504920959472657, 5.2, 50.2, 8.605018806457519]
+Testing performance of task 7:  [0.07708883285522461, 5.9, 44.0, 7.489910507202149]
+Testing performance of task 8:  [0.08026316165924072, 3.8, 31.7, 8.506278705596923]
+Testing performance of task 9:  [0.08554396629333497, 87.2, 98.9, 0.5395940661430358]
+Average Task Incremental Accuracy:  16.43
+
+
+Namespace(add_bn_next=True, add_bn_prev=False, arch='resnet18', checkpoint='checkpoint/227604_resnet18', compression=1.0, data_path='../../data/CIFAR', dataset='cifar100', display_gap=50, epochs=250, ft_epochs=250, ft_lr=0.1, ft_schedule=[100, 150, 200], ft_weight_decay=0.0005, gamma=0.1, growth_rate=0.5, increments=[10, 10, 10, 10, 10, 10, 10, 10, 10, 10], jobid='227604', logs='logs', lr=0.1, manual_seed=7137, momentum=0.9, num_class=100, overflow=False, random_classes=False, resume_from='./checkpoint/random_init_test_resnet18/model_rand_init.pth', schedule=[100, 150, 200], test_batch=100, train_batch=64, validation=0, weight_decay=0.0005, workers=4)
+
+real	168m57.074s
+user	346m31.075s
+sys	59m24.893s
+
+Ending script...
+Sat Mar 18 21:06:47 EDT 2023

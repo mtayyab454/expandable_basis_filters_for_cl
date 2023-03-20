@@ -1,0 +1,129 @@
+Sun Mar 12 16:09:47 EDT 2023
+Slurm nodes: evc2
+You were assigned 1 gpu(s)
+Please run `conda env list` to see a list of all available environments. Use
+`source activate <env>` to activate the environment '<env>'. 
+
+Currently Loaded Modules:
+  1) anaconda/anaconda3
+
+ 
+
+	[4mGPU0	mlx5_0	CPU Affinity	NUMA Affinity[0m
+GPU0	 X 	SYS	0,2	0
+mlx5_0	SYS	 X 		
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+
+1.13.1+cu116
+11.6
+Namespace(add_bn_next=True, add_bn_prev=False, arch='resnet18', checkpoint='checkpoint', compression=1.0, data_path='../../data/CIFAR', dataset='cifar100', display_gap=50, epochs=250, ft_epochs=250, ft_lr=0.1, ft_schedule=[100, 150, 200], ft_weight_decay=0.0005, gamma=0.1, growth_rate=0.0, increments=[10, 10, 10, 10, 10, 10, 10, 10, 10, 10], jobid='226788', logs='logs', lr=0.1, manual_seed=7137, momentum=0.9, overflow=False, random_classes=False, resume_from='./checkpoint/random_init_test_resnet18/model_rand_init.pth', schedule=[100, 150, 200], test_batch=100, train_batch=64, validation=0, weight_decay=0.0005, workers=4)
+Files already downloaded and verified
+Files already downloaded and verified
+0
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+1
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+2
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+3
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+4
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+5
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+6
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+7
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+8
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+9
+[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+
+
+__________________________________________________________________________________________
+
+Training task: 0
+
+Task ID: [0] - Epoch: [1 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.11356460595432716, 18.730221518987342, 66.69303797468355, 3.232888879655283]
+Testing:  [0.0685194730758667, 21.6, 72.7, 2.894231677055359]
+Best Acc:  21.6
+
+Task ID: [0] - Epoch: [51 | 250] LR: 0.100000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.019691280171841005, 85.54193037974683, 99.42642405063292, 0.43482690313948863]
+Testing:  [0.08259432315826416, 76.7, 97.7, 0.810143232345581]
+Best Acc:  76.7
+New lr for parameter group: 0  ->  0.010000000000000002
+
+Task ID: [0] - Epoch: [101 | 250] LR: 0.010000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02430406401428995, 95.33227848101266, 99.98022151898734, 0.14850544184446335]
+Testing:  [0.0837249994277954, 86.9, 98.6, 0.480970798432827]
+Best Acc:  86.9
+New lr for parameter group: 0  ->  0.0010000000000000002
+
+Task ID: [0] - Epoch: [151 | 250] LR: 0.001000
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.02475724039198477, 99.96044303797468, 100.0, 0.008545071641101113]
+Testing:  [0.07660307884216308, 87.4, 98.9, 0.47748852968215943]
+Best Acc:  88.5
+New lr for parameter group: 0  ->  0.00010000000000000003
+
+Task ID: [0] - Epoch: [201 | 250] LR: 0.000100
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Training:  [0.020325005808963053, 99.78243670886076, 100.0, 0.008514449234662836]
+Testing:  [0.07557492256164551, 87.7, 99.1, 0.4589008688926697]
+Best Acc:  88.5
+
+Keys:  ['time', 'acc1', 'acc5', 'ce_loss']
+Testing performance of task 0:  [0.07439579963684081, 88.5, 98.7, 0.46562879383563993]
+Average Task Incremental Accuracy:  88.5
+[27, 64, 64, 64, 64, 128, 128, 64, 128, 128, 256, 256, 128, 256, 256, 512, 512, 256, 512, 512]
+Running inference on model to measure class incremental accuracy ...
+Total tasks: 1, CIL Acc: 83.70, Task-id Cls. Acc.:  100.00
+
+
+__________________________________________________________________________________________
+
+Training task:  1
+Traceback (most recent call last):
+  File "train_multitask.py", line 213, in <module>
+    mt_model = training_loop_multitask(model=mt_model, optimizer=optimizer, task_id=i, train_loaders=train_loaders, test_loaders=test_loaders, logger=logger, args=args,
+  File "train_multitask.py", line 193, in main
+    tmp, tmp1 = inference(test_loaders[:1], mt_model, args, 1)
+  File "/lustre/fs0/home/mtayyab/codes/compressed_continual_learning/cifar/models/resnet_eft.py", line 191, in set_task_id
+    super().set_task_id(id)
+  File "/lustre/fs0/home/mtayyab/codes/compressed_continual_learning/multitask_model.py", line 210, in set_task_id
+    module.set_task_id(id)
+  File "/lustre/fs0/home/mtayyab/codes/compressed_continual_learning/multitask_layer.py", line 71, in set_task_id
+    self.shared_weights[self.task_id].requires_grad = True
+  File "/home/mtayyab/my-envs/my-pytorch1.13.1/lib/python3.7/site-packages/torch/nn/modules/container.py", line 566, in __getitem__
+    idx = self._get_abs_string_index(idx)
+  File "/home/mtayyab/my-envs/my-pytorch1.13.1/lib/python3.7/site-packages/torch/nn/modules/container.py", line 545, in _get_abs_string_index
+    raise IndexError('index {} is out of range'.format(idx))
+IndexError: index 1 is out of range
+
+real	17m43.905s
+user	34m35.666s
+sys	5m48.100s
+
+Ending script...
+Sun Mar 12 16:27:33 EDT 2023
