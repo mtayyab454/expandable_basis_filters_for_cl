@@ -145,7 +145,7 @@ def resnet18(num_classes):
 from multitask_model import MultiTaskModel, MultitaskConv2d, fuse_conv_and_bn
 
 class ResNetMultitask(ResNet, MultiTaskModel):
-    def __init__(self, basis_channels_list, add_bn_prev_list, add_bn_next_list, block, num_blocks, num_classes):
+    def __init__(self, basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list, block, num_blocks, num_classes):
         super().__init__(block, num_blocks)
 
         del self.fc
@@ -154,7 +154,7 @@ class ResNetMultitask(ResNet, MultiTaskModel):
         self.classifiers.append(nn.Linear(512 * block.expansion, num_classes))
 
         self.replace_bn_with_sequential()
-        self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list)
+        self.replace_conv2d_with_basisconv2d(basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list)
 
     def load_t1_weights(self, t1_model):
         assert len(self.classifiers) == 1, 'This fucntion should only be called when model has just one task'
@@ -204,10 +204,10 @@ class ResNetMultitask(ResNet, MultiTaskModel):
 
         return output
 
-def resnet18_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, num_classes):
+def resnet18_multitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list, num_classes):
     """ return a ResNet 18 object
     """
-    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
+    return ResNetMultitask(basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list, BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
 
 
 # if __name__ == '__main__':

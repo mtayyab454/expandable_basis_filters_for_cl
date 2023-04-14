@@ -97,7 +97,7 @@ def get_basis_channels_from_t(model, t):
 
     return in_channels, out_channels, basis_channels
 
-def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_list, add_bn_next_list):
+def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list):
     """
     Recursively replaces all Conv2d layers in a module with BasisConv2d layers.
 
@@ -128,6 +128,11 @@ def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_li
             else:
                 add_bn_next = add_bn_next_list
 
+            if isinstance(carry_all_list, list):
+                carry_all = carry_all_list.pop(0)
+            else:
+                carry_all = carry_all_list
+
             in_channels = child_module.in_channels
             basis_channels = basis_channels_list.pop(0)
 
@@ -139,12 +144,12 @@ def _replace_conv2d_with_basisconv2d(module, basis_channels_list, add_bn_prev_li
             groups = child_module.groups
 
             basis_layer = MultitaskConv2d(add_bn_prev, add_bn_next, in_channels, basis_channels, out_channels,
-                                          kernel_size, stride, padding, dilation, groups)
+                                          kernel_size, stride, padding, dilation, groups, carry_all)
             setattr(module, name, basis_layer)
             # module._modules[name] = basis_layer
         else:
             # Recursively apply the function to the child module
-            _replace_conv2d_with_basisconv2d(child_module, basis_channels_list, add_bn_prev_list, add_bn_next_list)
+            _replace_conv2d_with_basisconv2d(child_module, basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list)
 
 def get_layer(model, name):
     layer = model
@@ -195,8 +200,8 @@ class MultiTaskModel(nn.Module):
         super(MultiTaskModel, self).__init__()
         # print('MultiTaskModel')
 
-    def replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list):
-        _replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list)
+    def replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list):
+        _replace_conv2d_with_basisconv2d(self, basis_channels_list, add_bn_prev_list, add_bn_next_list, carry_all_list)
 
     def replace_bn_with_sequential(self):
         for name, module in self.named_modules():

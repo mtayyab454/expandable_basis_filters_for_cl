@@ -39,6 +39,7 @@ source activate my-pytorch1.13.1
 
 
 # Run TensorFlow
+#--pretrained-cps ./checkpoint/226429_resnet18/model0_best.pth,./checkpoint/227654_resnet18/model_0_ft_best.pth \
 echo
 time python train_multitask.py --jobid $SLURM_JOB_ID \
 --arch resnet18 \
@@ -46,6 +47,7 @@ time python train_multitask.py --jobid $SLURM_JOB_ID \
 --dataset cifar100 \
 --add-bn-prev 0 \
 --add-bn-next 1 \
+--carry-all 0 \
 --data-path ../../data/CIFAR \
 --increments 10 10 10 10 10 10 10 10 10 10 \
 --validation 0 \
@@ -53,13 +55,13 @@ time python train_multitask.py --jobid $SLURM_JOB_ID \
 --overflow 0 \
 --resume 1 \
 --starting-tid 1 \
---pretrained-cps ./checkpoint/226429_resnet18/model0_best.pth,./checkpoint/227654_resnet18/model_0_ft_best.pth \
+--pretrained-cps ./checkpoint/resnet18_10_0.4/model0_best.pth,./checkpoint/resnet18_10_0.4/model_0_ft_best.pth \
 --lr 0.1 \
 --weight-decay 0.0005 \
 --epochs 250 \
 --schedule 100 150 200 \
---compression 0.80 \
---growth-rate 0.3 \
+--compression 0.4 \
+--growth-rate 0.5 \
 --workers 4 \
 --train-batch 64 \
 --ft-lr 0.1 \

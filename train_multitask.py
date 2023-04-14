@@ -32,12 +32,13 @@ parser.add_argument('--arch', default='resnet18')
 parser.add_argument('--increments', type=int, nargs='+', default=[10]*10)
 parser.add_argument('--add-bn-prev', type=str2bool, nargs='?', default=False)
 parser.add_argument('--add-bn-next', type=str2bool, nargs='?', default=True)
+parser.add_argument('--carry-all', type=str2bool, nargs='?', default=False)
 
 parser.add_argument('--compression', default=0.95, type=float)
 parser.add_argument('--growth-rate', default=0.1, type=float)
 
 parser.add_argument('--resume', type=str2bool, nargs='?', default=False)
-parser.add_argument('--starting-tid', type=str, default='1', help='<tid> or <tid_ft>')
+parser.add_argument('--starting-tid', type=str, default='0_ft', help='<tid> or <tid_ft>')
 parser.add_argument('--pretrained-cps', type=str, default='./checkpoint/226429_resnet18/model0_best.pth,./checkpoint/227651_resnet18/model_0_ft_best.pth')
 
 parser.add_argument('-d', '--dataset', default='cifar100', type=str)
@@ -178,7 +179,7 @@ def main():
 
     # Create a multitask model with the basis channels estimated above
     mt_model = models.__dict__[args.arch + '_multitask'](basis_channels_list=basis_channels,
-        add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, num_classes=args.increments[0])
+        add_bn_prev_list=args.add_bn_prev, add_bn_next_list=args.add_bn_next, carry_all_list=args.carry_all, num_classes=args.increments[0])
     # Initilize the task 1 parameters of multitask model using the weights of conv2d model
     # print(mt_model)
     mt_model.cuda()

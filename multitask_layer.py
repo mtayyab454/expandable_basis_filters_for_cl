@@ -5,9 +5,10 @@ from collections import OrderedDict
 import math
 
 class SharedConvList(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, groups):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, groups, carry_all):
         super(SharedConvList, self).__init__()
         self.task_id = 0
+        self.carry_all = carry_all
         self.conv_s = nn.ModuleList()
         self.conv_s.append(nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias=False))
 
@@ -52,10 +53,13 @@ class SharedConvList(nn.Module):
             self.conv_s.append(sc)
 
     def forward(self, x):
-        if len(self.conv_s) == 1:
+        if self.task_id == 0:
             out = self.conv_s[0](x)
         else:
-            out = torch.cat([self.conv_s[i](x) for i in range(self.task_id+1)], dim=1)
+            if self.carry_all:
+                out = torch.cat([self.conv_s[i](x) for i in range(self.task_id+1)], dim=1)
+            else:
+                out = torch.cat([self.conv_s[0](x), self.conv_s[self.task_id](x)], dim=1)
 
         return out
 
@@ -90,12 +94,13 @@ class TaskConv2d(nn.Module):
         return x
 
 class MultitaskConv2d(nn.Module):
-    def __init__(self, add_bn_prev, add_bn_next, in_channels, basis_channels, out_channels, kernel_size, stride, padding, dilation, groups):
+    def __init__(self, add_bn_prev, add_bn_next, in_channels, basis_channels, out_channels, kernel_size, stride, padding, dilation, groups, carry_all):
         super(MultitaskConv2d, self).__init__()
 
+        self.carry_all = carry_all
         self.task_id = 0
         # self.shared_weights = nn.ParameterList([nn.Parameter(torch.Tensor(basis_channels, in_channels, *kernel_size))])
-        self.conv_shared = SharedConvList(in_channels, basis_channels, kernel_size, stride, padding, dilation, groups)
+        self.conv_shared = SharedConvList(in_channels, basis_channels, kernel_size, stride, padding, dilation, groups, carry_all)
         tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next, in_channels=basis_channels, out_channels=out_channels)
 
         self.conv_task = nn.ModuleList()
@@ -157,9 +162,15 @@ class MultitaskConv2d(nn.Module):
 
         self.conv_shared.add_task(copy_from, growth_rate)
 
-        task_in_ch = [w.weight.shape[0] for w in self.conv_shared.conv_s]
-        tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
-                        in_channels=sum(task_in_ch), out_channels=self.conv_task[0].conv_t.out_channels)
+        if self.carry_all:
+            task_in_ch = [w.weight.shape[0] for w in self.conv_shared.conv_s]
+            tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
+                            in_channels=sum(task_in_ch), out_channels=self.conv_task[0].conv_t.out_channels)
+        else:
+            task_in_ch = [self.conv_shared.conv_s[0].weight.shape[0], self.conv_shared.conv_s[-1].weight.shape[0]]
+            tc = TaskConv2d(add_bn_prev=add_bn_prev, add_bn_next=add_bn_next,
+                            in_channels=sum(task_in_ch), out_channels=self.conv_task[0].conv_t.out_channels)
+
 
         if growth_rate == 0:
             tc.load_state_dict(self.conv_task[copy_from].state_dict(), strict=True)
@@ -195,7 +206,8 @@ if __name__ == '__main__':
         stride=conv.stride,
         padding=conv.padding,
         dilation=conv.dilation,
-        groups=conv.groups)
+        groups=conv.groups,
+        carry_all=False)
     basis_conv.init_weights_from_conv2d(conv)
 
     y_conv = conv(x)
@@ -208,7 +220,7 @@ if __name__ == '__main__':
     print(torch.allclose(y_conv, y_basis, atol=1e-5))  # True
 
     # test task 0
-    basis_conv.add_task(copy_from=None, growth_rate=0.1, add_bn_prev=False, add_bn_next=True)
+    basis_conv.add_task(copy_from=0, growth_rate=0.1, add_bn_prev=False, add_bn_next=True)
     print(basis_conv.conv_shared.conv_s[0].weight.sum())
     print(basis_conv.conv_shared.conv_s[1].weight.sum())
     basis_conv.eval()
@@ -216,25 +228,25 @@ if __name__ == '__main__':
     y_basis = basis_conv(x)
     print(torch.allclose(y_conv, y_basis, atol=1e-5))  # True
 
-    import torch.optim as optim
-    optimizer = optim.SGD(basis_conv.get_task_parameters(1), lr=0.1)
-
-    basis_conv.train()
-
-    # for name, parameter in basis_conv.named_parameters():
-    #     print(f'{name} is {parameter.requires_grad}')
+    # import torch.optim as optim
+    # optimizer = optim.SGD(basis_conv.get_task_parameters(1), lr=0.1)
     #
-    # for name, module in basis_conv.named_modules():
-    #     print(f'{name} is {module.training}')
-
-    basis_conv.set_task_id(1)
-    y_basis = basis_conv(x)
-
-    loss = (y_conv - y_basis).abs().sum()
-    print(loss)
-    loss.backward()
-
-    optimizer.step()
-
-    print(basis_conv.conv_shared.conv_s[0].weight.sum())
-    print(basis_conv.conv_shared.conv_s[1].weight.sum())
+    # basis_conv.train()
+    #
+    # # for name, parameter in basis_conv.named_parameters():
+    # #     print(f'{name} is {parameter.requires_grad}')
+    # #
+    # # for name, module in basis_conv.named_modules():
+    # #     print(f'{name} is {module.training}')
+    #
+    # basis_conv.set_task_id(1)
+    # y_basis = basis_conv(x)
+    #
+    # loss = (y_conv - y_basis).abs().sum()
+    # print(loss)
+    # loss.backward()
+    #
+    # optimizer.step()
+    #
+    # print(basis_conv.conv_shared.conv_s[0].weight.sum())
+    # print(basis_conv.conv_shared.conv_s[1].weight.sum())
