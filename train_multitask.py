@@ -228,8 +228,8 @@ def main():
         mt_model.set_task_id(i)
         mt_model.cuda()
 
+        logger = get_logger(fname='task' + str(i), comment='Train task ' + str(i))
         if exec_block(args, str(i)):
-            logger = get_logger(fname='task'+str(i), comment='Train task '+str(i))
             print('\n\n'+ '_'*90 +'\n')
             print('Training task: ', i)
             # Training model
@@ -257,6 +257,8 @@ def main():
         print('Class Incrimental Accuracy : ', class_incrimental_accuracy)
         print('Avg. Class Incrimental Accuracy : ', sum(class_incrimental_accuracy) / len(class_incrimental_accuracy))
         print('Task Prediction Accuracy : ', task_prediction_accuracy)
+
+        logger.one_time({'task_accuracy':ts_vec, 'class_incrimental_accuracy':class_incrimental_accuracy, 'task_prediction_accuracy':task_prediction_accuracy})
 
     print('\n')
     print(args)
